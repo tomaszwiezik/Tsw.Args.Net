@@ -1,43 +1,39 @@
 ﻿using System.Reflection;
 
-namespace Tsw.Args.Net
+namespace Tsw.Args.Net.Help
 {
-    internal class SyntaxDocBuilder : ArgumentsDefinition
+    internal class SyntaxDocBuilder
     {
-        public SyntaxDocBuilder(ParserOptions options)
+        public SyntaxDocBuilder(List<object> syntaxVariants, ParserOptions options)
         {
             _options = options;
+            _syntaxVariants = syntaxVariants.FindAll(x => x != null);
         }
 
         private readonly ParserOptions _options;
+        private readonly List<object> _syntaxVariants;
 
 
-        public SyntaxDoc Build()
-        {
-            return new SyntaxDoc(BuildSyntaxDoc());
-        }
+        public SyntaxDoc Build() => new(BuildSyntaxDoc());
 
 
         private List<SyntaxVariantDoc> BuildSyntaxDoc()
         {
             var syntaxDoc = new List<SyntaxVariantDoc>();
 
-            foreach (var variant in InstantiateSyntaxVariants())
+            foreach (var variant in _syntaxVariants)
             {
-                if (variant != null)
-                {
-                    var doc = GetClassAttribute<DocAttribute>(variant) ?? throw new ApplicationException($"Syntax variant {variant.GetType().FullName} has no [Doc] attribute");
+                var doc = ArgumentsReflection.GetClassAttribute<DocAttribute>(variant) ?? throw new ApplicationException($"Syntax variant {variant.GetType().FullName} has no [Doc] attribute");
 
-                    var arguments = BuildArgumentsDoc(GetPropertiesWithAttribute<ArgumentAttribute>(variant));
-                    var options = BuildOptionsDoc(GetPropertiesWithAttribute<OptionAttribute>(variant));
+                var arguments = BuildArgumentsDoc(ArgumentsReflection.GetPropertiesWithAttribute<ArgumentAttribute>(variant));
+                var options = BuildOptionsDoc(ArgumentsReflection.GetPropertiesWithAttribute<OptionAttribute>(variant));
 
-                    syntaxDoc.Add(new SyntaxVariantDoc(
-                        text: doc.Text,
-                        syntaxVariantName: variant.GetType().FullName ?? throw new ApplicationException($"Argument definition class cannot be of a generic type"),
-                        fullSyntax: CreateFullSyntax(arguments, options),
-                        arguments: arguments,
-                        options: options));
-                }
+                syntaxDoc.Add(new SyntaxVariantDoc(
+                    Text: doc.Text,
+                    SyntaxVariantName: variant.GetType().FullName ?? throw new ApplicationException($"Argument definition class cannot be of a generic type"),
+                    FullSyntax: CreateFullSyntax(arguments, options),
+                    Arguments: arguments,
+                    Options: options));
             }
             syntaxDoc.Sort((x, y) => x.FullSyntax.CompareTo(y.FullSyntax));
 
@@ -51,9 +47,9 @@ namespace Tsw.Args.Net
 
             foreach (var property in properties)
             {
-                var argument = GetPropertyAttribute<ArgumentAttribute>(property) ?? throw new ApplicationException($"Property {property.Name} has no [Argument] attribute");
+                var argument = ArgumentsReflection.GetPropertyAttribute<ArgumentAttribute>(property) ?? throw new ApplicationException($"Property {property.Name} has no [Argument] attribute");
 
-                var doc = GetPropertyAttribute<DocAttribute>(property) ?? throw new ApplicationException($"Property {property.Name} has no [Doc] attribute");
+                var doc = ArgumentsReflection.GetPropertyAttribute<DocAttribute>(property) ?? throw new ApplicationException($"Property {property.Name} has no [Doc] attribute");
                 if (string.IsNullOrWhiteSpace(argument.Name) && string.IsNullOrWhiteSpace(argument.RequiredValue)) throw new ApplicationException($"Porperty {property.Name} has neither Name, nor RequiredValue specified in [Argument] attribute");
 
                 argumentsDoc.Add(new ArgumentDoc(
@@ -75,12 +71,12 @@ namespace Tsw.Args.Net
 
             foreach (var property in properties)
             {
-                var option = GetPropertyAttribute<OptionAttribute>(property) ?? throw new ApplicationException($"Property {property.Name} has no [Option] attribute");
+                var option = ArgumentsReflection.GetPropertyAttribute<OptionAttribute>(property) ?? throw new ApplicationException($"Property {property.Name} has no [Option] attribute");
                 if (string.IsNullOrWhiteSpace(option.Name)) throw new ApplicationException($"Porperty {property.Name} has no Name specified in [Option] attribute");
 
-                var doc = GetPropertyAttribute<DocAttribute>(property) ?? throw new ApplicationException($"Property {property.Name} has no [Doc] attribute");
+                var doc = ArgumentsReflection.GetPropertyAttribute<DocAttribute>(property) ?? throw new ApplicationException($"Property {property.Name} has no [Doc] attribute");
 
-                var propertyType = GetPropertyType(property);
+                var propertyType = ArgumentsReflection.GetPropertyType(property);
 
                 optionsDoc.Add(new OptionDoc(
                     Name: propertyType.FullName == "System.Boolean" ? $"{_options.OptionPrefix}{option.Name}" : $"{_options.OptionPrefix}{option.Name}=<{propertyType.Name.ToLower()}>",
@@ -97,15 +93,8 @@ namespace Tsw.Args.Net
         private string CreateFullSyntax(List<ArgumentDoc> arguments, List<OptionDoc> options)
         {
             var fullSyntax = string.Empty;
-
-            foreach (var argument in arguments)
-            {
-                fullSyntax += argument.Required ? $" {argument.Name}" : $" [{argument.Name}]";
-            }
-            foreach (var option in options)
-            {
-                fullSyntax += option.Required ? $" {option.Name}" : $" [{option.Name}]";
-            }
+            arguments.ForEach(argument => fullSyntax += argument.Required ? $" {argument.Name}" : $" [{argument.Name}]");
+            options.ForEach(option => fullSyntax += option.Required ? $" {option.Name}" : $" [{option.Name}]");
 
             return fullSyntax.Trim();
         }

@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+﻿using Tsw.Args.Net.Tests.Arguments;
 
 namespace Tsw.Args.Net.Tests
 {
@@ -6,13 +6,13 @@ namespace Tsw.Args.Net.Tests
     {
         private string[] ToArgs(string args) => args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-        private ArgumentsParser GetParser(ParserOptions? options = null) => new (assembly: Assembly.GetExecutingAssembly(), options: options);
+        private ArgumentsParser GetParser(ParserOptions? options = null, IEnumerable<Type>? types = null) => new(types, options);
 
 
         [Fact]
         public void TestHelp()
         {
-            var result = GetParser()
+            var result = GetParser(types: [typeof(OptionUnitTest), typeof(SampleMixedArguments), typeof(SampleOptionArguments), typeof(SamplePositionalArguments)])
                 .Run(ToArgs("--help"), (arguments) => 0);
             Assert.Equal(0, result);
         }
@@ -24,7 +24,7 @@ namespace Tsw.Args.Net.Tests
             {
                 OptionPrefix = "**"
             };
-            var result = GetParser(options: options)
+            var result = GetParser(options: options, types: [typeof(OptionUnitTest), typeof(SampleMixedArguments), typeof(SampleOptionArguments), typeof(SamplePositionalArguments)])
                 .Run(ToArgs("**help"), (arguments) => 0);
             Assert.Equal(0, result);
         }
@@ -32,7 +32,7 @@ namespace Tsw.Args.Net.Tests
         [Fact]
         public void TestHelpShortcut()
         {
-            var result = GetParser()
+            var result = GetParser(types: [typeof(OptionUnitTest), typeof(SampleMixedArguments), typeof(SampleOptionArguments), typeof(SamplePositionalArguments)])
                 .Run(ToArgs("-h"), (arguments) => 0);
             Assert.Equal(0, result);
         }
@@ -44,7 +44,7 @@ namespace Tsw.Args.Net.Tests
             {
                 OptionShortcutPrefix = "*"
             };
-            var result = GetParser(options: options)
+            var result = GetParser(options: options, types: [typeof(OptionUnitTest), typeof(SampleMixedArguments), typeof(SampleOptionArguments), typeof(SamplePositionalArguments)])
                 .Run(ToArgs("*h"), (arguments) => 0);
             Assert.Equal(0, result);
         }
@@ -52,7 +52,7 @@ namespace Tsw.Args.Net.Tests
         [Fact]
         public void TestNoArguments()
         {
-            var result = GetParser()
+            var result = GetParser(types: [typeof(OptionUnitTest), typeof(SampleMixedArguments), typeof(SampleOptionArguments), typeof(SamplePositionalArguments)])
                 .Run(ToArgs(""), (arguments) => 0);
             Assert.Equal(1, result);
         }
@@ -60,7 +60,7 @@ namespace Tsw.Args.Net.Tests
         [Fact]
         public void TestPositionalArguments()
         {
-            var result = GetParser()
+            var result = GetParser(types: [typeof(SamplePositionalArguments)])
                 .Run<SamplePositionalArguments>(ToArgs("command file"), (arguments) =>
                 {
                     Assert.Equal("command", arguments.Command);
@@ -74,7 +74,7 @@ namespace Tsw.Args.Net.Tests
         [Fact]
         public void TestOptionalPositionalArguments()
         {
-            var result = GetParser()
+            var result = GetParser(types: [typeof(SamplePositionalArguments)])
                 .Run<SamplePositionalArguments>(ToArgs("command file output"), (arguments) =>
                 {
                     Assert.Equal("command", arguments.Command);
@@ -88,7 +88,7 @@ namespace Tsw.Args.Net.Tests
         [Fact]
         public void TestTooManyPositionalArguments()
         {
-            var result = GetParser()
+            var result = GetParser(types: [typeof(SamplePositionalArguments)])
                 .Run<SamplePositionalArguments>(ToArgs("command file output some others"), (arguments) => 0);
             Assert.Equal(1, result);
         }
@@ -96,7 +96,7 @@ namespace Tsw.Args.Net.Tests
         [Fact]
         public void TestInsufficientPositionalArguments()
         {
-            var result = GetParser()
+            var result = GetParser(types: [typeof(SamplePositionalArguments)])
                 .Run<SamplePositionalArguments>(ToArgs("command"), (arguments) => 0);
             Assert.Equal(1, result);
         }
@@ -104,7 +104,7 @@ namespace Tsw.Args.Net.Tests
         [Fact]
         public void TestUnsupportedCommandInPositionalArguments()
         {
-            var result = GetParser()
+            var result = GetParser(types: [typeof(SamplePositionalArguments)])
                 .Run<SamplePositionalArguments>(ToArgs("unsupportedCommand"), (arguments) => 0);
             Assert.Equal(1, result);
         }
@@ -112,7 +112,7 @@ namespace Tsw.Args.Net.Tests
         [Fact]
         public void TestOptionArguments()
         {
-            var result = GetParser()
+            var result = GetParser(types: [typeof(SampleOptionArguments)])
                 .Run<SampleOptionArguments>(ToArgs("--boolRequired --stringRequired=required-string --intRequired=999 --boolOptional --stringOptional=optional-string --intOptional=200"), (arguments) =>
                 {
                     Assert.Equal(true, arguments.BoolRequired);
@@ -134,7 +134,7 @@ namespace Tsw.Args.Net.Tests
                 OptionPrefix = "**",
                 OptionShortcutPrefix = "*"
             };
-            var result = GetParser(options: options)
+            var result = GetParser(options: options, types: [typeof(SampleOptionArguments)])
                 .Run<SampleOptionArguments>(ToArgs("**boolRequired **stringRequired=required-string **intRequired=999 **boolOptional **stringOptional=optional-string **intOptional=200"), (arguments) =>
                 {
                     Assert.Equal(true, arguments.BoolRequired);
@@ -151,7 +151,7 @@ namespace Tsw.Args.Net.Tests
         [Fact]
         public void TestRequiredOnlyOptionArguments()
         {
-            var result = GetParser()
+            var result = GetParser(types: [typeof(SampleOptionArguments)])
                 .Run<SampleOptionArguments>(ToArgs("--boolRequired --stringRequired=required-string --intRequired=999"), (arguments) =>
                 {
                     Assert.Equal(true, arguments.BoolRequired);
@@ -173,7 +173,7 @@ namespace Tsw.Args.Net.Tests
                 OptionPrefix = "**",
                 OptionShortcutPrefix = "*"
             };
-            var result = GetParser(options: options)
+            var result = GetParser(options: options, types: [typeof(SampleOptionArguments)])
                 .Run<SampleOptionArguments>(ToArgs("**boolRequired **stringRequired=required-string **intRequired=999"), (arguments) =>
                 {
                     Assert.Equal(true, arguments.BoolRequired);
@@ -190,7 +190,7 @@ namespace Tsw.Args.Net.Tests
         [Fact]
         public void TestOptionShortcutArguments()
         {
-            var result = GetParser()
+            var result = GetParser(types: [typeof(SampleOptionArguments)])
                 .Run<SampleOptionArguments>(ToArgs("-br -sr=required-string -ir=999 -bo -so=optional-string -io=200"), (arguments) =>
                 {
                     Assert.Equal(true, arguments.BoolRequired);
@@ -212,7 +212,7 @@ namespace Tsw.Args.Net.Tests
                 OptionPrefix = "**",
                 OptionShortcutPrefix = "*"
             };
-            var result = GetParser(options: options)
+            var result = GetParser(options: options, types: [typeof(SampleOptionArguments)])
                 .Run<SampleOptionArguments>(ToArgs("*br *sr=required-string *ir=999 *bo *so=optional-string *io=200"), (arguments) =>
                 {
                     Assert.Equal(true, arguments.BoolRequired);
@@ -229,7 +229,7 @@ namespace Tsw.Args.Net.Tests
         [Fact]
         public void TestRequiredOnlyOptionShortcutArguments()
         {
-            var result = GetParser()
+            var result = GetParser(types: [typeof(SampleOptionArguments)])
                 .Run<SampleOptionArguments>(ToArgs("-br -sr=required-string -ir=999"), (arguments) =>
                 {
                     Assert.Equal(true, arguments.BoolRequired);
@@ -251,7 +251,7 @@ namespace Tsw.Args.Net.Tests
                 OptionPrefix = "**",
                 OptionShortcutPrefix = "*"
             };
-            var result = GetParser(options: options)
+            var result = GetParser(options: options, types: [typeof(SampleOptionArguments)])
                 .Run<SampleOptionArguments>(ToArgs("*br *sr=required-string *ir=999"), (arguments) =>
                 {
                     Assert.Equal(true, arguments.BoolRequired);
@@ -268,7 +268,7 @@ namespace Tsw.Args.Net.Tests
         [Fact]
         public void TestMixedArguments()
         {
-            var result = GetParser()
+            var result = GetParser(types: [typeof(SampleMixedArguments)])
                 .Run<SampleMixedArguments>(ToArgs("command file output --boolRequired --stringRequired=required-string --intRequired=999 --boolOptional --stringOptional=optional-string --intOptional=200"), (arguments) =>
                 {
                     Assert.Equal("command", arguments.Command);
@@ -294,7 +294,7 @@ namespace Tsw.Args.Net.Tests
                 OptionPrefix = "**",
                 OptionShortcutPrefix = "*"
             };
-            var result = GetParser(options: options)
+            var result = GetParser(options: options, types: [typeof(SampleMixedArguments)])
                 .Run<SampleMixedArguments>(ToArgs("command file output **boolRequired **stringRequired=required-string **intRequired=999 **boolOptional **stringOptional=optional-string **intOptional=200"), (arguments) =>
                 {
                     Assert.Equal("command", arguments.Command);
@@ -315,7 +315,7 @@ namespace Tsw.Args.Net.Tests
         [Fact]
         public void TestMixedArgumentsWithOptionsBeforeArguments()
         {
-            var result = GetParser()
+            var result = GetParser(types: [typeof(SampleMixedArguments)])
                 .Run<SampleMixedArguments>(ToArgs("--boolRequired --stringRequired=required-string --intRequired=999 --boolOptional --stringOptional=optional-string --intOptional=200 command file output"), (arguments) =>
                 {
                     Assert.Equal("command", arguments.Command);
@@ -341,7 +341,7 @@ namespace Tsw.Args.Net.Tests
                 OptionPrefix = "**",
                 OptionShortcutPrefix = "*"
             };
-            var result = GetParser(options: options)
+            var result = GetParser(options: options, types: [typeof(SampleMixedArguments)])
                 .Run<SampleMixedArguments>(ToArgs("**boolRequired **stringRequired=required-string **intRequired=999 **boolOptional **stringOptional=optional-string **intOptional=200 command file output"), (arguments) =>
                 {
                     Assert.Equal("command", arguments.Command);
@@ -362,7 +362,7 @@ namespace Tsw.Args.Net.Tests
         [Fact]
         public void TestRequiredOnlyMixedArguments()
         {
-            var result = GetParser()
+            var result = GetParser(types: [typeof(SampleMixedArguments)])
                 .Run<SampleMixedArguments>(ToArgs("command file --boolRequired --stringRequired=required-string --intRequired=999"), (arguments) =>
                 {
                     Assert.Equal("command", arguments.Command);
@@ -388,7 +388,7 @@ namespace Tsw.Args.Net.Tests
                 OptionPrefix = "**",
                 OptionShortcutPrefix = "*"
             };
-            var result = GetParser(options: options)
+            var result = GetParser(options: options, types: [typeof(SampleMixedArguments)])
                 .Run<SampleMixedArguments>(ToArgs("command file **boolRequired **stringRequired=required-string **intRequired=999"), (arguments) =>
                 {
                     Assert.Equal("command", arguments.Command);
@@ -407,31 +407,53 @@ namespace Tsw.Args.Net.Tests
         }
 
         [Fact]
+        public void TestIncompleteOptionArguments()
+        {
+            var result = GetParser(types: [typeof(IncompleteOptionArguments)])
+                .Run(ToArgs("--o"), (arguments) => 0);
+            Assert.Equal(2, result);
+        }
+
+        [Fact]
+        public void TestAmbiguousOptionNameArguments()
+        {
+            var result = GetParser(types: [typeof(AmbiguousOptionNameArguments)])
+                .Run(ToArgs("--option"), (arguments) => 0);
+            Assert.Equal(2, result);
+        }
+
+        [Fact]
+        public void TestAmbiguousOptionShortcutArguments()
+        {
+            var result = GetParser(types: [typeof(AmbiguousOptionNameArguments)])
+                .Run(ToArgs("--optionA"), (arguments) => 0);
+            Assert.Equal(2, result);
+        }
+
+        [Fact]
         public void TestOnHelpRequestedHandler()
         {
-            var result = GetParser()
+            var result = GetParser(types: [typeof(SamplePositionalArguments)])
                 .Run<SamplePositionalArguments>(ToArgs("--help"), (arguments) => 0,
                     onHelpRequested: () => 99
                 );
             Assert.Equal(99, result);
-
         }
 
         [Fact]
         public void TestOnSyntaxErrorHandler()
         {
-            var result = GetParser()
+            var result = GetParser(types: [typeof(SamplePositionalArguments)])
                 .Run<SamplePositionalArguments>(ToArgs("unsupportedCommand"), (arguments) => 0,
                     onSyntaxError: (message) => 99
                 );
             Assert.Equal(99, result);
-
         }
 
         [Fact]
         public void TestOnErrorHandler()
         {
-            var result = GetParser()
+            var result = GetParser(types: [typeof(SamplePositionalArguments)])
                 .Run<SamplePositionalArguments>(ToArgs("command file"), (arguments) => throw new ApplicationException("Test exception"),
                     onError: (exception) =>
                     {
@@ -441,7 +463,22 @@ namespace Tsw.Args.Net.Tests
                     }
                 );
             Assert.Equal(99, result);
+        }
 
+        [Fact]
+        public void TestMissingArgumentPosition()
+        {
+            var result = GetParser(types: [typeof(MissingArgumentPositionArguments)])
+                .Run<MissingArgumentPositionArguments>(ToArgs("command file"), (arguments) => 0);
+            Assert.Equal(2, result);
+        }
+
+        [Fact]
+        public void TestDuplicatedArgumentPosition()
+        {
+            var result = GetParser(types: [typeof(DuplicatedArgumentPositionArguments)])
+                .Run<MissingArgumentPositionArguments>(ToArgs("command file"), (arguments) => 0);
+            Assert.Equal(2, result);
         }
 
     }

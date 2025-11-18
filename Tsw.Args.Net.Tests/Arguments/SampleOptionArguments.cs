@@ -1,4 +1,4 @@
-﻿namespace Tsw.Args.Net.Tests
+﻿namespace Tsw.Args.Net.Tests.Arguments
 {
     [Arguments]
     [Doc("Sample option arguments")]

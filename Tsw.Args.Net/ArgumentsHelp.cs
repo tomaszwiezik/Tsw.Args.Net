@@ -1,15 +1,39 @@
 ﻿using System.Reflection;
 using System.Text;
+using Tsw.Args.Net.Help;
 
 namespace Tsw.Args.Net
 {
-    public class ArgumentsHelp : ArgumentsDefinition
+    public class ArgumentsHelp
     {
-        public ArgumentsHelp(Assembly? assembly = null, ParserOptions? options = null)
-            : base(assembly, options?.ApplicationName)
+        [Obsolete("Use ArgumentsHelp(IEnumerable<Type>?, ParserOptions?) instead, it is no longer needed to provide assembly for arguments extraction. Example: instead of new ArgumentsHelp(assembly, options), use new ArgumentsHelp(types: Arguments.GetAll(assembly), options)")]
+        public ArgumentsHelp(Assembly? assembly, ParserOptions? options = null)
         {
+            _types = _types.Union(assembly != null ?
+                Arguments.GetAll(assembly) :
+                AppDomain.CurrentDomain.GetAssemblies().ToList().SelectMany(x => Arguments.GetAll(x))
+                );
+            if (!_types.Any()) throw new ApplicationException("No types decorated with [Arguments] attribute have been found");
+
             Options.Merge(options);
+            ExecutableName = options?.ApplicationName
+                ?? Assembly.GetEntryAssembly()?.GetName().Name
+                ?? throw new ApplicationException("Cannot determine the application name, use ParserOptions to provide it");
         }
+
+        public ArgumentsHelp(IEnumerable<Type>? types = null, ParserOptions? options = null)
+        {
+            _types = _types.Union(types ?? AppDomain.CurrentDomain.GetAssemblies().ToList().SelectMany(x => Arguments.GetAll(x)));
+            if (!_types.Any()) throw new ApplicationException("No types decorated with [Arguments] attribute have been found");
+
+            Options.Merge(options);
+            ExecutableName = options?.ApplicationName 
+                ?? Assembly.GetEntryAssembly()?.GetName().Name 
+                ?? throw new ApplicationException("Cannot determine the application name, use ParserOptions to provide it");
+        }
+
+
+        private readonly IEnumerable<Type> _types = [];
 
 
         public ParserOptions Options { get; private set; } = new ParserOptions()
@@ -17,6 +41,7 @@ namespace Tsw.Args.Net
             OptionPrefix = "--",
             OptionShortcutPrefix = "-"
         };
+        public string ExecutableName { get; }
 
 
         public string GetText()
@@ -28,7 +53,7 @@ namespace Tsw.Args.Net
             text.AppendLine("SYNTAX:");
             text.AppendLine(string.Empty);
 
-            var syntaxDoc = new SyntaxDocBuilder(Options).Build();
+            var syntaxDoc = new SyntaxDocBuilder(ArgumentsReflection.InstantiateSyntaxVariants(_types), Options).Build();
             var formatter = new TextFormatter();
 
             GetColumsWidth(syntaxDoc, formatter,
@@ -38,7 +63,7 @@ namespace Tsw.Args.Net
 
             foreach (var doc in syntaxDoc.Documentation)
             {
-                text.AppendLine($"{GetExecutableName()} {doc.FullSyntax}");
+                text.AppendLine($"{ExecutableName} {doc.FullSyntax}");
                 text.AppendLine();
                 text.AppendLine(formatter.ToColumns([0], [doc.Text]));
                 text.AppendLine();
@@ -79,44 +104,14 @@ namespace Tsw.Args.Net
         }
 
 
-        private int GetMaxArgumentLength(List<SyntaxVariantDoc> syntaxDoc)
-        {
-            int maxLength = -1;
-            foreach (var syntax in syntaxDoc)
-            {
-                foreach (var argument in syntax.Arguments)
-                {
-                    if (argument.Name.Length > maxLength) maxLength = argument.Name.Length;
-                }
-            }
-            return maxLength;
-        }
+        private int GetMaxArgumentLength(List<SyntaxVariantDoc> syntaxDoc) =>
+            syntaxDoc.SelectMany(x => x.Arguments).Max(x => x.Name.Length);
 
-        private int GetMaxOptionShortcutNameLength(List<SyntaxVariantDoc> syntaxDoc)
-        {
-            int maxLength = -1;
-            foreach (var syntax in syntaxDoc)
-            {
-                foreach (var option in syntax.Options)
-                {
-                    if (option.ShortcutName.Length > maxLength) maxLength = option.ShortcutName.Length;
-                }
-            }
-            return maxLength;
-        }
+        private int GetMaxOptionShortcutNameLength(List<SyntaxVariantDoc> syntaxDoc) =>
+            syntaxDoc.SelectMany(x => x.Options).Max(x => x.ShortcutName.Length);
 
-        private int GetMaxOptionNameLength(List<SyntaxVariantDoc> syntaxDoc)
-        {
-            int maxLength = -1;
-            foreach (var syntax in syntaxDoc)
-            {
-                foreach (var option in syntax.Options)
-                {
-                    if (option.Name.Length > maxLength) maxLength = option.Name.Length;
-                }
-            }
-            return maxLength;
-        }
+        private int GetMaxOptionNameLength(List<SyntaxVariantDoc> syntaxDoc) =>
+            syntaxDoc.SelectMany(x => x.Options).Max(x => x.Name.Length);
 
     }
 }

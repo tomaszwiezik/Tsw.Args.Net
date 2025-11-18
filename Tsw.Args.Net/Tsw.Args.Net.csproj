@@ -7,13 +7,14 @@
     <Authors>Tomasz Więzik</Authors>
     <Description>Flexible command-line arguments parser. Supports both positional arguments and options (switches). Automatically generates a nicely formatted help text.</Description>
     <Copyright>Copyright (C) Tomasz Więzik</Copyright>
-    <PackageReleaseNotes>The first release.</PackageReleaseNotes>
+    <PackageReleaseNotes>1. Arguments and option consistency verification.
+2. Argument types filtering.</PackageReleaseNotes>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>command-line;argument;parameter;option;switch;console;args;parser</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/tomaszwiezik/Tsw.Args.Net</PackageProjectUrl>
     <Title>Tsw.Args.Net</Title>
-    <Version>9.0.1</Version>
+    <Version>9.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

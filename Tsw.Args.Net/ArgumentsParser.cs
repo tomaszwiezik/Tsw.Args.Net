@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Tsw.Args.Net.Parser;
 
 namespace Tsw.Args.Net
 {
@@ -14,13 +15,29 @@ namespace Tsw.Args.Net
     /// </list>
     /// </para>
     /// </summary>
-    public class ArgumentsParser : ArgumentsDefinition
+    public class ArgumentsParser
     {
-        public ArgumentsParser(Assembly? assembly = null, ParserOptions? options = null) 
-            : base(assembly, options?.ApplicationName)
+        [Obsolete("Use ArgumentsParser(IEnumerable<Type>, ParserOptions) instead, it is no longer needed to provide assembly for arguments extraction. Example: instead of new ArgumentsParser(assembly, options), use new ArgumentsParser(types: Arguments.GetAll(assembly), options)")]
+        public ArgumentsParser(Assembly? assembly, ParserOptions? options = null)
         {
+            _types = _types.Union(assembly != null ?
+                Arguments.GetAll(assembly) :
+                AppDomain.CurrentDomain.GetAssemblies().ToList().SelectMany(x => Arguments.GetAll(x))
+                );
+            if (!_types.Any()) throw new ApplicationException("No types decorated with [Arguments] attribute have been found");
+
             Options.Merge(options);
         }
+
+        public ArgumentsParser(IEnumerable<Type>? types = null, ParserOptions? options = null)
+        {
+            _types = _types.Union(types ?? AppDomain.CurrentDomain.GetAssemblies().ToList().SelectMany(x => Arguments.GetAll(x)));
+            if (!_types.Any()) throw new ApplicationException("No types decorated with [Arguments] attribute have been found");
+
+            Options.Merge(options);
+        }
+
+        private readonly IEnumerable<Type> _types = [];
 
 
         public ParserOptions Options { get; private set; } = new ParserOptions()
@@ -71,7 +88,7 @@ namespace Tsw.Args.Net
                 }
                 else
                 {
-                    Console.WriteLine(new ArgumentsHelp(assembly: GetArgumentDefinitionAssembly(), options: Options).GetText());
+                    Console.WriteLine(new ArgumentsHelp(types: _types, options: Options).GetText());
                     return 0;
                 }
             }
@@ -106,7 +123,7 @@ namespace Tsw.Args.Net
         {
             if (args.Length == 1 && (args[0] == $"{Options.OptionPrefix}help" || args[0] == $"{Options.OptionShortcutPrefix}h")) throw new HelpRequestedException();
 
-            var syntaxVariants = InstantiateSyntaxVariants();
+            var syntaxVariants = ArgumentsReflection.InstantiateSyntaxVariants(_types);
             var arguments = ExtractArguments(args);
             var options = ExtractOptions(args);
             var parsedSyntaxVariants = new List<object>();
@@ -126,7 +143,7 @@ namespace Tsw.Args.Net
             {
                 1 => selectedSyntaxVariants[0],
                 0 => throw new SyntaxException($"Missing or incorrect arguments; use {Options.OptionPrefix}help or {Options.OptionShortcutPrefix}h option to display help"),
-                _ => throw new SyntaxException("Ambiguous syntax definition, more than one syntax variants match provided arguments")
+                _ => throw new SyntaxException("Ambiguous syntax definition, multiple syntax variants match provided arguments")
             };
         }
 
@@ -139,18 +156,19 @@ namespace Tsw.Args.Net
             .FindAll(x => !x.StartsWith(Options.OptionPrefix!) && !x.StartsWith(Options.OptionShortcutPrefix!));
 
 
-        private List<Option> ExtractOptions(string[] args) => args
+        private List<Option> ExtractOptions(string[] args) => [..args
             .ToList()
             .FindAll(x => x.StartsWith(Options.OptionPrefix!) || x.StartsWith(Options.OptionShortcutPrefix!))
-            .Select(x => new Option(x))
-            .ToList();
+            .Select(x => new Option(x))];
 
 
         private object? ParseArguments(List<string> arguments, object? syntaxVariant)
         {
             if (syntaxVariant == null) return null;
 
-            var properties = GetPropertiesWithAttribute<ArgumentAttribute>(syntaxVariant);
+            ArgumentsDefinitionConsistency.CheckPositions(syntaxVariant);
+
+            var properties = ArgumentsReflection.GetPropertiesWithAttribute<ArgumentAttribute>(syntaxVariant);
             if (arguments.Count > properties.Count()) return null;   // There are more arguments than the variant can accept
 
             for (int position = 0; position < arguments.Count; position++)
@@ -160,18 +178,18 @@ namespace Tsw.Args.Net
                 var optionFound = false;
                 foreach (var property in properties)
                 {
-                    var attribute = GetPropertyAttribute<ArgumentAttribute>(property);
+                    var attribute = ArgumentsReflection.GetPropertyAttribute<ArgumentAttribute>(property);
                     if (attribute!.Position == position)
                     {
                         if (attribute.RequiredValue == argument || attribute.RequiredValue == null)
                         {
-                            switch (GetPropertyType(property).FullName)
+                            switch (ArgumentsReflection.GetPropertyType(property).FullName)
                             {
                                 case "System.Int16": property.SetValue(syntaxVariant, Convert.ToInt16(argument)); break;
                                 case "System.Int32": property.SetValue(syntaxVariant, Convert.ToInt32(argument)); break;
                                 case "System.Int64": property.SetValue(syntaxVariant, Convert.ToInt64(argument)); break;
                                 case "System.String": property.SetValue(syntaxVariant, argument); break;
-                                default: throw new SyntaxException($"Argument {argument} of type {GetPropertyType(property).FullName} is not supported");
+                                default: throw new SyntaxException($"Argument {argument} of type {ArgumentsReflection.GetPropertyType(property).FullName} is not supported");
                             }
 
                             optionFound = true;
@@ -189,29 +207,31 @@ namespace Tsw.Args.Net
         {
             if (syntaxVariant == null) return null;
 
-            var properties = GetPropertiesWithAttribute<OptionAttribute>(syntaxVariant);
+            ArgumentsDefinitionConsistency.CheckAmbiguity(syntaxVariant);
+
+            var properties = ArgumentsReflection.GetPropertiesWithAttribute<OptionAttribute>(syntaxVariant);
 
             foreach (var option in options)
             {
                 var optionFound = false;
                 foreach (var property in properties)
                 {
-                    var attribute = GetPropertyAttribute<OptionAttribute>(property);
+                    var attribute = ArgumentsReflection.GetPropertyAttribute<OptionAttribute>(property);
                     if ($"{Options.OptionPrefix}{attribute!.Name}" == option.Name || $"{Options.OptionShortcutPrefix}{attribute!.ShortcutName}" == option.Name)
                     {
-                        if (GetPropertyType(property).FullName != "System.Boolean" && !option.HasValue)
+                        if (ArgumentsReflection.GetPropertyType(property).FullName != "System.Boolean" && !option.HasValue)
                         {
                             throw new SyntaxException($"Option {Options.OptionPrefix}{option.Name} is invalid, no value has been provided");
                         }
 
-                        switch (GetPropertyType(property).FullName)
+                        switch (ArgumentsReflection.GetPropertyType(property).FullName)
                         {
                             case "System.Boolean": property.SetValue(syntaxVariant, true); break;
                             case "System.Int16": property.SetValue(syntaxVariant, Convert.ToInt16(option.Value)); break;
                             case "System.Int32": property.SetValue(syntaxVariant, Convert.ToInt32(option.Value)); break;
                             case "System.Int64": property.SetValue(syntaxVariant, Convert.ToInt64(option.Value)); break;
                             case "System.String": property.SetValue(syntaxVariant, option.Value); break;
-                            default: throw new SyntaxException($"Option {Options.OptionPrefix}{option.Name} of type {GetPropertyType(property).FullName} is not supported");
+                            default: throw new SyntaxException($"Option {Options.OptionPrefix}{option.Name} of type {ArgumentsReflection.GetPropertyType(property).FullName} is not supported");
                         }
 
                         optionFound = true;
@@ -232,17 +252,17 @@ namespace Tsw.Args.Net
             {
                 var variantAccepted = true;
 
-                foreach (var property in GetPropertiesWithAttribute<ArgumentAttribute>(syntaxVariant))
+                foreach (var property in ArgumentsReflection.GetPropertiesWithAttribute<ArgumentAttribute>(syntaxVariant))
                 {
-                    var attribute = GetPropertyAttribute<ArgumentAttribute>(property);
+                    var attribute = ArgumentsReflection.GetPropertyAttribute<ArgumentAttribute>(property);
                     if (attribute!.Required && property.GetValue(syntaxVariant) == null) variantAccepted = false;
                 }
 
                 if (variantAccepted)
                 {
-                    foreach (var property in GetPropertiesWithAttribute<OptionAttribute>(syntaxVariant))
+                    foreach (var property in ArgumentsReflection.GetPropertiesWithAttribute<OptionAttribute>(syntaxVariant))
                     {
-                        var attribute = GetPropertyAttribute<OptionAttribute>(property);
+                        var attribute = ArgumentsReflection.GetPropertyAttribute<OptionAttribute>(property);
                         if (attribute!.Required && property.GetValue(syntaxVariant) == null) variantAccepted = false;
                     }
                 }

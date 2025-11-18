@@ -1,4 +1,4 @@
-﻿namespace Tsw.Args.Net
+﻿namespace Tsw.Args.Net.Help
 {
     internal class TextFormatter
     {

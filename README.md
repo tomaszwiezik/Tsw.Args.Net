@@ -2,53 +2,53 @@
 
 ## Terminology
 
-* `Positional arguments` - arguments which must be provided in a specific order.
-* `Options` - usually optional arguments which can be provided in any order. By default, options are recognized by prepending `--` (double dash) characters. Option can be a boolean switch (i.e., `--force`), or have a value (i.e., --retries=5).
-* `Option shortcut` - alternative short option name. By default, shortcuts are recognized by prepending `-` (single dash) character.
-* `Argument definition class` - a class decorated with argument-related attributes, the properties of which get values from parsed arguments.
-* `Simple syntax` - a scenario in which all arguments can be defined in a single argument definition class.
-* `Syntax variants` - in this scenario arguments are divided into separate sets, each set can have a different positional arguments and options.
+* `Positional argument  s` - Arguments that must be provided in a specific order.
+* `Options` - Typically optional arguments which can be provided in any order. By default, options are recognized by preceding `--` (double hyphen). An option can be a boolean switch (i.e., `--force`), or accept a value (i.e., --retries=5).
+* `Option shortcut` - An alternative short name for an option. By default, shortcuts are recognized by preceding `-` (single hyphen).
+* `Argument definition class` - A class decorated with the `[Arguments]` attribute, whose properties receive values from parsed arguments.
+* `Simple syntax` - A scenario in which all arguments are defined in a single argument definition class.
+* `Syntax variants` - in this scenario arguments are divided into separate sets, each with its own positional arguments and options.
 
 
 # Quick start
 
-Quick start examples probably cover most cases required from command-line applications. The following conditions must be met to apply one of those patterns:
+Quick start examples likely cover most cases required by command-line applications. To apply one of these patterns, the following conditions must be met:
 * The parser uses default settings.
-* Argument definition class(-es) are defined in the entry assembly of the application.
+* Argument definition class(es) are defined in one of the assemblies automatically loaded by the application.
 
 ## Argument definition class
 
-Argument definition class properties are mapped to parsed command-line arguments. Both the class and the properties must be docorated with obligatory attributes, which are listed below.
+Properties od argument definition class are mapped to parsed command-line arguments. Both the class and the properties must be decorated with obligatory attributes, which are listed below.
 
 Required class attributes:
-* `[Arguments]` - denotes the class as an argument definition class.
-* `[Doc("Syntax general description")]` - required by the help generator.
+* `[Arguments]` - Denotes the class as an argument definition class.
+* `[Doc("Syntax general description")]` - Obligatory, required by the help generator.
 
 Required property attributes for positional arguments:
 * `[Argument(Name="argument_name", Required=true|false, RequiredValue="argument_value", Position=0,1,...)]`
-	- `Name` - argument name, used by the help generator.
-	- `Required` - determines if the argument is obligatory, or not. Non-obligatory arguments should be assigned with a default value.
-	- `RequiredValue` - use this parameter when the argument expects a specific value.
-	- `Position` - zero-based index of the positional argument.
-* `[Doc("Argument description")]` - required by the help generator.
+	- `Name` - Argument name, used by the help generator.
+	- `Required` - Determines if the argument is obligatory, or not. Non-obligatory arguments must be assigned with a default value.
+	- `RequiredValue` - Use this parameter when the argument expects a specific value.
+	- `Position` - Zero-based index of the positional argument.
+* `[Doc("Argument description")]` - Obligatory, required by the help generator.
 
 Required property attributes for options:
 * `[Option(Name="option_name", Required=true|false, ShortcutName="shortcut_name")]`
-	- `Name` - option name without prepending `--` characters.
-	- `Required` - determines if the option is obligatory, or not. Non-obligatory options should be assigned with a default value.
-	- `ShortcutName` - alternative short name of the option without prepending `-` character. This parameter is not obligatory and is usually used with the most commonly used options.
-* `[Doc("Argument description")]` - required by the help generator.
+	- `Name` - Option name without prepending `--` characters.
+	- `Required` - Determines if the option is obligatory, or not. Non-obligatory options must be assigned with a default value.
+	- `ShortcutName` - An alternative short name for an option without preceding `-` character. This parameter is not obligatory and is usually used with the most commonly used options.
+* `[Doc("Argument description")]` - Obligatory, required by the help generator.
 
 > [!IMPORTANT]
-> All properties must be nullable types.
+> All properties must be of nullable types.
 > Allowed types: `bool`, `int`, `long`, `short`, `string`
-> All non-obligatory arguments or options must have a default value.
+> All optional arguments and options must have a default value.
 
 See examples of argument definition classes in the following sections.
 
 ## Simple syntax
 
-Simple syntax can be used when exactly one argument definition class exists in the application and it covers all possible combinations of arguments and/or options.
+You can use simple syntax when the application contains exactly one argument definition class, and it supports all combinations of arguments and options
 
 ### Example
 
@@ -108,17 +108,17 @@ namespace TW.Args.Net.Sample
 
 ## Syntax variants
 
-Syntax variants should be used when an application accepts a few argument sets of different positional arguments and/or options.
+Syntax variants should be used when an application accepts multiple argument sets, each with different positional arguments and/or options
 
 ### Example
 `myApp` works with files and accepts the following arguments:
 
 ```
 myApp copy <src_file> <dest_file> [--quiet | -q] [--retry=N]
-myApp delete <file> [--force]
+myApp delete <file> [--force | -f]
 ```
 
-Here the parameters for `copy` and `delete` operations are different and it is not possible to define them in a single argument definition class. That is why two such classes are defined, one for `copy` and one for `delete` commands:
+In this case, the parameters for the `copy` and `delete` operations differ, making it impossible to define them within a single argument definition class. Therefore, two such classes are defined—one for the `copy` command and one for the `delete` command:
 
 ```cs
 namespace TW.Args.Net.SampleVariants
@@ -210,7 +210,7 @@ namespace TW.Args.Net.SampleVariants
 
 ## `ArgumentsParser.Run()`
 
-Runs the parser. Exists in two variants:
+Runs the parser. Available in two variants:
 
 1. Simple syntax; `T` is the type of argument definition class:
 ```cs
@@ -232,26 +232,47 @@ public int Run(
 	Func<Exception, int>? onError = null)
 ```
 
-* `args` - an array of arguments received by the application.
-* `handler` - a function that receives parsed arguments. This is the heart of the application, all further processing starts here when argumenents are successfully processed.
-* `onHelpRequested` - an optional function for overriding the default behavior for help text display.
-* `onSyntaxError` - an optional function for overriding the reaction on syntax error. It receives the error message in `string` parameter.
-* `onError` - an optional function for overriding the reaction on any other error. It receives the error in `Exception` parameter.
+* `args` - An array of arguments received by the application.
+* `handler` - A function that receives parsed arguments. This is the heart of the application, all further processing starts here when argumenents are successfully parsed.
+* `onHelpRequested` - An optional function for overriding the default behavior for help text display.
+* `onSyntaxError` - An optional function for overriding the reaction on syntax error. It receives the error message in `string` parameter.
+* `onError` - An optional function for overriding the reaction on any other error. It receives the error in `Exception` parameter.
+
+In both variants the returned value should be the error code returned by the application.
 
 ## Configuring the parser
 
 `ArgumentsParser` default configuration can be changed by passing appropriate parameters to the parser's constructor:
 
 ```cs
-public ArgumentsParser(Assembly? assembly = null, ParserOptions? options = null)
+[Obsolete]
+public ArgumentsParser(
+	Assembly? assembly,
+	ParserOptions? options = null)
+
+public ArgumentsParser(
+	IEnumerable<Type>? types = null,
+	ParserOptions? options = null)
+
 ```
 
 Parameters:
-* `assembly` - the assembly where argument definition classes are defined. By default the entry assembly is used. This parameter shoul be only used when arguments definition class(-es) is in another assembly.
-* `options` - parser options:
-	- `ApplicationName` - the application name to use in help text. By default, the entry assembly name is used.
-	- `OptionPrefix` - the option prefix. The default value is `--` (double dash characters).
-	- `OptionShortcutPrefix` - the option shortcut prefix. The default value is `-` (single dash character).
+* `assembly` - The assembly in which argument definition classes are defined.
+* `types` - A list of argument types to include in parsing.
+* `options` - Parser options:
+	- `ApplicationName` - The application name to use in help text. By default, the entry assembly name is used.
+	- `OptionPrefix` - The option prefix. The default value is `--` (double hyphen characters).
+	- `OptionShortcutPrefix` - The option shortcut prefix. The default value is `-` (single hyphen character).
+
+> [!WARNING]
+> `ArgumentParser(assembly, options)` variant is deprecated and should not be used. It will be removed in the future.
+> Instead of `ArgumentParser(assembly, options)` use the equivalent `ArgumentParser(types: Arguments.GetAll(assembly), options)`.
+
+If neither `assembly`, nor `types` are provided, then all argument definition classes found in all assemblies loaded at the moment of parsing are used.
+
+The `types` parameter is usefull in the following scenarios:
+* When argument definition classes are defined in other assemblies that are not yet loaded at the moment of parsing.
+* When some argument definition classes are intentionally excluded from parsing (i.e., testing).
 
 ### Example
 
@@ -314,13 +335,27 @@ var result = new ArgumentsParser().Run<SamplePositionalArguments>(ToArgs("comman
 The help text generator is implemented in `ArgumentsHelp` class. Its constructor accepts the following optional parameters:
 
 ```cs
-public ArgumentsHelp(Assembly? assembly = null, ParserOptions? options = null)
+[Obsolete]
+public ArgumentsHelp(
+	Assembly? assembly, 
+	ParserOptions? options = null)
+
+public ArgumentsHelp(
+	IEnumerable<Type>? types = null,
+	ParserOptions? options = null)
 ```
 
-* `assembly` - the assembly where argument definition classes are declared. The entry assembly is used by default.
-* `options` - parser options. Values passed here must be consistent with the parser.
+* `assembly` - The assembly in which argument definition classes are defined.
+* `types` - A list of argument types to include in parsing.
+* `options` - Parser options. Values passed here must be consistent with the parser.
 
-To display the help, use the following code snippet:
+> [!WARNING]
+> `ArgumentParser(assembly, options)` variant is deprecated and should not be used. It will be removed in the future.
+> Instead of `ArgumentParser(assembly, options)` use the equivalent `ArgumentParser(types: Arguments.GetAll(assembly), options)`.
+
+If neither `assembly`, nor `types` are provided, then all argument definition classes found in all assemblies loaded at the moment of parsing are used.
+
+To display the help, use the following code snippet (arguments provided in `ArgumentsHelp` constructors should be consistent with those in `ArgumentsParser` constructor):
 
 ```cs
 Console.WriteLine(new ArgumentsHelp().GetText());

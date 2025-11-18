@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tsw.Args.Net.SampleVariants
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tsw.Args.Net.Tests", "Tsw.Args.Net.Tests\Tsw.Args.Net.Tests.csproj", "{33DDC444-6863-36A1-4F5F-926CC4345389}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tsw.Args.Net.SampleVariants2", "Tsw.Args.Net.SampleVariants2\Tsw.Args.Net.SampleVariants2.csproj", "{F8CB34B9-63EB-43CA-8D39-8AEC75345E09}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tsw.Args.Net.SampleVariants2.Lib", "Tsw.Args.Net.SampleVariants2.Lib\Tsw.Args.Net.SampleVariants2.Lib.csproj", "{63DDC367-A7AD-4185-837D-1922F366DC4E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,14 @@ Global
 		{33DDC444-6863-36A1-4F5F-926CC4345389}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{33DDC444-6863-36A1-4F5F-926CC4345389}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{33DDC444-6863-36A1-4F5F-926CC4345389}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8CB34B9-63EB-43CA-8D39-8AEC75345E09}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8CB34B9-63EB-43CA-8D39-8AEC75345E09}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8CB34B9-63EB-43CA-8D39-8AEC75345E09}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8CB34B9-63EB-43CA-8D39-8AEC75345E09}.Release|Any CPU.Build.0 = Release|Any CPU
+		{63DDC367-A7AD-4185-837D-1922F366DC4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63DDC367-A7AD-4185-837D-1922F366DC4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63DDC367-A7AD-4185-837D-1922F366DC4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63DDC367-A7AD-4185-837D-1922F366DC4E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

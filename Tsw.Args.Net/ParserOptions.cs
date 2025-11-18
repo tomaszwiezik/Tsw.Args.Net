@@ -4,7 +4,7 @@
     {
         /// <summary>
         /// Application name to display in help text.
-        /// If not provided, then the name of assembly in which argument definition classes are defined is used.
+        /// If not provided, then the name of entry assembly is used.
         /// </summary>
         public string? ApplicationName { get; set; }
 
@@ -19,6 +19,10 @@
         public string? OptionShortcutPrefix { get; set; }
 
 
+        /// <summary>
+        /// Combines current values with those provided in options parameter. All non-null values in options overwrite current values.
+        /// </summary>
+        /// <param name="options">New values.</param>
         public void Merge(ParserOptions? options)
         {
             if (options?.ApplicationName != null) ApplicationName = options.ApplicationName;

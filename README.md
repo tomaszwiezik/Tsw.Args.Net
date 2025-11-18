@@ -48,7 +48,7 @@ See examples of argument definition classes in the following sections.
 
 ## Simple syntax
 
-You can use simple syntax when the application contains exactly one argument definition class, and it supports all combinations of arguments and options
+You can use simple syntax when the application contains exactly one argument definition class, which supports all combinations of arguments and options.
 
 ### Example
 
@@ -108,7 +108,7 @@ namespace TW.Args.Net.Sample
 
 ## Syntax variants
 
-Syntax variants should be used when an application accepts multiple argument sets, each with different positional arguments and/or options
+Syntax variants should be used when an application accepts multiple argument sets, each with different positional arguments and/or options.
 
 ### Example
 `myApp` works with files and accepts the following arguments:
@@ -118,7 +118,7 @@ myApp copy <src_file> <dest_file> [--quiet | -q] [--retry=N]
 myApp delete <file> [--force | -f]
 ```
 
-In this case, the parameters for the `copy` and `delete` operations differ, making it impossible to define them within a single argument definition class. Therefore, two such classes are defined—one for the `copy` command and one for the `delete` command:
+In this case, the parameters for the `copy` and `delete` operations differ, making it impossible to define them within a single argument definition class. Therefore, two such classes are defined - one for the `copy` command and one for the `delete` command:
 
 ```cs
 namespace TW.Args.Net.SampleVariants
@@ -284,7 +284,7 @@ var options = new ParserOptions()
 	OptionPrefix = "**"
 };
 var result = ArgumentsParser(options: options)
-	.Run<args), (arguments) =>
+	.Run(args), (arguments) =>
 	{
 		return 0;
 	});
@@ -300,14 +300,14 @@ By default, arguments are processed by one of `ArgumentsParser.Run()` methods an
 It is possible to overwrite the default behavior by using custom error handlers with `ArgumentsParser.Run()`:
 * When `onHelpRequested` handler is used with `Run()`, then it is executed instead of the default handler.
 * When `onSyntaxError` handler is used with `Run()`, then it is executed instead of the default handler. The handler accepts a `string` paramter, which contains the error message.
-* When `onError` handler is used with `Run()`, then it is executed instead of the default handler. The handler accepts a paramter of type `Exception`.
+* When `onError` handler is used with `Run()`, then it is executed instead of the default handler. The handler accepts a parameter of type `Exception`.
 
 ### Example
 
-The example illustrates using of all types ot error handlers.
+The example illustrates using of all types of error handlers.
 
 ```cs
-var result = new ArgumentsParser().Run<SamplePositionalArguments>(ToArgs("command file"), 
+var result = new ArgumentsParser().Run<SamplePositionalArguments>(args), 
 	(arguments) =>
 	{
 		throw new ApplicationException("Test exception")
@@ -324,7 +324,7 @@ var result = new ArgumentsParser().Run<SamplePositionalArguments>(ToArgs("comman
 	},
 	onError: (exception) =>
 	{
-		// exception is of type ApplicationException, exception.Message is 'Test exception'
+		// exception is of type ApplicationException, exception. The message is 'Test exception'.
 		return 99;
 	}
 );

@@ -489,5 +489,21 @@ namespace Tsw.Args.Net.Tests
             Assert.Equal(1, result);
         }
 
+        /// <summary>
+        /// This is a separate test, as decimals are new feature in 9.1.1.
+        /// </summary>
+        [Fact]
+        public void TestDecimalParameters()
+        {
+            var result = GetParser(types: [typeof(DecimalArguments)])
+                .Run<DecimalArguments>(ToArgs("1.234 -o=3.14"), (arguments) =>
+                {
+                    Assert.Equal(1.234M, arguments.Positional!.Value);
+                    Assert.Equal(3.14M, arguments.Option!.Value);
+                    return 0;
+                });
+            Assert.Equal(0, result);
+        }
+
     }
 }

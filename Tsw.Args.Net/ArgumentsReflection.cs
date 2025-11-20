@@ -21,9 +21,10 @@ namespace Tsw.Args.Net
 
 
         public static bool IsSingleValueOption(PropertyInfo property) =>
-            ArgumentsReflection.GetPropertyType(property).FullName switch
+            GetPropertyType(property).FullName switch
             {
-                 "System.Boolean" => true,
+                "System.Boolean" => true,
+                "System.Decimal" => true,
                 "System.Int16" => true,
                 "System.Int32" => true,
                 "System.Int64" => true,

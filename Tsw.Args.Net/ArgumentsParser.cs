@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Globalization;
+using System.Reflection;
 using Tsw.Args.Net.Parser;
 
 namespace Tsw.Args.Net
@@ -187,6 +188,7 @@ namespace Tsw.Args.Net
                             {
                                 switch (ArgumentsReflection.GetPropertyType(property).FullName)
                                 {
+                                    case "System.Decimal": property.SetValue(syntaxVariant, decimal.Parse(argument, CultureInfo.InvariantCulture)); break;
                                     case "System.Int16": property.SetValue(syntaxVariant, Convert.ToInt16(argument)); break;
                                     case "System.Int32": property.SetValue(syntaxVariant, Convert.ToInt32(argument)); break;
                                     case "System.Int64": property.SetValue(syntaxVariant, Convert.ToInt64(argument)); break;
@@ -234,6 +236,7 @@ namespace Tsw.Args.Net
                         switch (ArgumentsReflection.GetPropertyType(property).FullName)
                         {
                             case "System.Boolean": property.SetValue(syntaxVariant, true); break;
+                            case "System.Decimal": property.SetValue(syntaxVariant, decimal.Parse(option.Value!, CultureInfo.InvariantCulture)); break;
                             case "System.Int16": property.SetValue(syntaxVariant, Convert.ToInt16(option.Value)); break;
                             case "System.Int32": property.SetValue(syntaxVariant, Convert.ToInt32(option.Value)); break;
                             case "System.Int64": property.SetValue(syntaxVariant, Convert.ToInt64(option.Value)); break;

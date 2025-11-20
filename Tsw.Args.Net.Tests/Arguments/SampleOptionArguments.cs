@@ -1,5 +1,8 @@
 ﻿namespace Tsw.Args.Net.Tests.Arguments
 {
+    /// <summary>
+    /// Arguments definition contains options only.
+    /// </summary>
     [Arguments]
     [Doc("Sample option arguments")]
     internal class SampleOptionArguments

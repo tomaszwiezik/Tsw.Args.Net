@@ -1,5 +1,8 @@
 ﻿namespace Tsw.Args.Net.Tests.Arguments
 {
+    /// <summary>
+    /// This arguments definition is used in tests, which expect two positional parameters, instead of one declared here.
+    /// </summary>
     [Arguments]
     [Doc("Missing Position")]
     internal class MissingArgumentPositionArguments

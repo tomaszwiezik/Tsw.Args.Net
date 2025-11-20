@@ -20,6 +20,19 @@ namespace Tsw.Args.Net
         }
 
 
+        public static bool IsSingleValueOption(PropertyInfo property) =>
+            ArgumentsReflection.GetPropertyType(property).FullName switch
+            {
+                 "System.Boolean" => true,
+                "System.Int16" => true,
+                "System.Int32" => true,
+                "System.Int64" => true,
+                "System.String" => true,
+                _ => throw new ApplicationException($"Unsupported option type: {GetPropertyType(property).FullName}")
+            };
+
+
+
         public static IEnumerable<PropertyInfo> GetPropertiesWithAttribute<TAttr>(object instance) => instance
             .GetType()
             .GetProperties()

@@ -1,5 +1,8 @@
 ﻿namespace Tsw.Args.Net.Tests.Arguments
 {
+    /// <summary>
+    /// Arguments definition is incorrect, as it contains two different options sharing the same shortcut.
+    /// </summary>
     [Arguments]
     [Doc("Ambiguous option shortcut arguments")]
     internal class AmbiguousOptionShortcutArguments

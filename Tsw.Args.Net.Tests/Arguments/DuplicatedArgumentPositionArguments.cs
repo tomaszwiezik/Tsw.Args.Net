@@ -1,5 +1,8 @@
 ﻿namespace Tsw.Args.Net.Tests.Arguments
 {
+    /// <summary>
+    /// Arguments definition is incorrect, as it contains two positional arguments with the same position.
+    /// </summary>
     [Arguments]
     [Doc("Duplicated Position")]
     internal class DuplicatedArgumentPositionArguments

@@ -481,5 +481,13 @@ namespace Tsw.Args.Net.Tests
             Assert.Equal(2, result);
         }
 
+        [Fact]
+        public void TestAmbiguouslyProvidedParameters()
+        {
+            var result = GetParser(types: [typeof(SampleOptionArguments)])
+                .Run<SampleOptionArguments>(ToArgs("-sr=somestring -ir=1 -br -br"), (arguments) => 0);
+            Assert.Equal(1, result);
+        }
+
     }
 }

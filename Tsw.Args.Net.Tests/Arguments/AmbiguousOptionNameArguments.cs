@@ -1,5 +1,8 @@
 ﻿namespace Tsw.Args.Net.Tests.Arguments
 {
+    /// <summary>
+    /// Arguments definition is incorrect, as it contains two options sharing the same name.
+    /// </summary>
     [Arguments]
     [Doc("Ambiguous option name arguments")]
     internal class AmbiguousOptionNameArguments

@@ -183,13 +183,15 @@ namespace Tsw.Args.Net
                     {
                         if (attribute.RequiredValue == argument || attribute.RequiredValue == null)
                         {
-                            switch (ArgumentsReflection.GetPropertyType(property).FullName)
+                            if (ArgumentsReflection.IsSingleValueOption(property))
                             {
-                                case "System.Int16": property.SetValue(syntaxVariant, Convert.ToInt16(argument)); break;
-                                case "System.Int32": property.SetValue(syntaxVariant, Convert.ToInt32(argument)); break;
-                                case "System.Int64": property.SetValue(syntaxVariant, Convert.ToInt64(argument)); break;
-                                case "System.String": property.SetValue(syntaxVariant, argument); break;
-                                default: throw new SyntaxException($"Argument {argument} of type {ArgumentsReflection.GetPropertyType(property).FullName} is not supported");
+                                switch (ArgumentsReflection.GetPropertyType(property).FullName)
+                                {
+                                    case "System.Int16": property.SetValue(syntaxVariant, Convert.ToInt16(argument)); break;
+                                    case "System.Int32": property.SetValue(syntaxVariant, Convert.ToInt32(argument)); break;
+                                    case "System.Int64": property.SetValue(syntaxVariant, Convert.ToInt64(argument)); break;
+                                    case "System.String": property.SetValue(syntaxVariant, argument); break;
+                                }
                             }
 
                             optionFound = true;
@@ -207,6 +209,7 @@ namespace Tsw.Args.Net
         {
             if (syntaxVariant == null) return null;
 
+            var usedOptions = new Dictionary<string, int>();
             ArgumentsDefinitionConsistency.CheckAmbiguity(syntaxVariant);
 
             var properties = ArgumentsReflection.GetPropertiesWithAttribute<OptionAttribute>(syntaxVariant);
@@ -223,6 +226,10 @@ namespace Tsw.Args.Net
                         {
                             throw new SyntaxException($"Option {Options.OptionPrefix}{option.Name} is invalid, no value has been provided");
                         }
+                        if (ArgumentsReflection.IsSingleValueOption(property) && usedOptions.ContainsKey(property.Name))
+                        {
+                            throw new SyntaxException($"Option {Options.OptionPrefix}{option.Name} is used more than once");
+                        }
 
                         switch (ArgumentsReflection.GetPropertyType(property).FullName)
                         {
@@ -231,9 +238,10 @@ namespace Tsw.Args.Net
                             case "System.Int32": property.SetValue(syntaxVariant, Convert.ToInt32(option.Value)); break;
                             case "System.Int64": property.SetValue(syntaxVariant, Convert.ToInt64(option.Value)); break;
                             case "System.String": property.SetValue(syntaxVariant, option.Value); break;
-                            default: throw new SyntaxException($"Option {Options.OptionPrefix}{option.Name} of type {ArgumentsReflection.GetPropertyType(property).FullName} is not supported");
+                            // (property.GetValue(syntaxVariant) as List<short>).Add(Convert.ToInt16(option.Value));
                         }
 
+                        usedOptions.Add(property.Name, 1);
                         optionFound = true;
                     }
                 }

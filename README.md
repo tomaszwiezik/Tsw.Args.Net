@@ -41,7 +41,7 @@ Required property attributes for options:
 
 > [!IMPORTANT]
 > All properties must be of nullable types.
-> Allowed types: `bool`, `int`, `long`, `short`, `string`
+> Supported types: `bool`, `decimal`, `int`, `long`, `short`, `string`
 > All optional arguments and options must have a default value.
 
 See examples of argument definition classes in the following sections.

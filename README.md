@@ -41,7 +41,9 @@ Required property attributes for options:
 
 > [!IMPORTANT]
 > All properties must be of nullable types.
-> Supported types: `bool`, `decimal`, `int`, `long`, `short`, `string`
+> Supported types:
+> - arguments: `decimal`, `int`, `long`, `short`, `string`
+> - options: `bool`, `decimal`, `int`, `long`, `short`, `string`, `List<decimal>`, `List<int>`, `List<long>`, `List<short>`, `List<string>`
 > All optional arguments and options must have a default value.
 
 See examples of argument definition classes in the following sections.
@@ -204,6 +206,49 @@ namespace TW.Args.Net.SampleVariants
     }
 }
 ```
+
+
+## Multiple option values
+
+Normally, each option represent a single value. It is, however, possible to use multiple value of the same option when necessary. To do so, just declare the option of one of supported `List<T>` types - see [Argument definition class](#argument-definition-class) chapter.
+
+### Example
+
+`myApp` application is a command-line app which accepts a single error file and multiple input files:
+
+```
+myApp --err=<error_file> --in=<input_file_1> --in=<input_file_2> ...
+```
+
+Argument definition class:
+
+```cs
+namespace TW.Args.Net.Sample
+{
+    [Arguments]
+    [Doc("Copy file to another location.")]
+    internal class Arguments
+    {
+        [Option(Name = "err", Required = true)]
+        [Doc("Error file path.")]
+        public string? ErrorFile { get; set; }
+
+        [Option(Name = "in", Required = true)]
+        [Doc("A list of input files.")]
+        public List<string>? InputFiles { get; set; }
+    }
+}
+```
+
+Syntax examples:
+
+```
+myApp --err=\path\err.txt --in=\path\input1.txt --in=\path\input2.txt       --> correct, two input files
+myApp --err=\path\err.txt --in=\path\input1.txt                             --> also correct, one input file is also enough
+myApp --err=\path\err.txt                                                   --> error, at least one input file is required
+myApp --err=\path\err.txt --err=\path\err2.txt --in=\path\input1.txt        --> error, two error files are not accepted 
+```
+
 
 
 # Advanced topics

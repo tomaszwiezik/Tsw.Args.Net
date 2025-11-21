@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Tsw.Args.Net.SampleListArguments": {
+      "commandName": "Project",
+      "commandLineArgs": "-h"
+    }
+  }
+}

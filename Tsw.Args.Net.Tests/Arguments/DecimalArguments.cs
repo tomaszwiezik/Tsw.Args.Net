@@ -9,6 +9,7 @@
         public decimal? Positional { get; set; }
 
         [Option(Name = "option", Required = true, ShortcutName = "o")]
+        [Doc("option")]
         public decimal? Option { get; set; }
     }
 }

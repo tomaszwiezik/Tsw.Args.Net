@@ -15,10 +15,8 @@ namespace Tsw.Args.Net
                 );
             if (!_types.Any()) throw new ApplicationException("No types decorated with [Arguments] attribute have been found");
 
-            Options.Merge(options);
-            ExecutableName = options?.ApplicationName
-                ?? Assembly.GetEntryAssembly()?.GetName().Name
-                ?? throw new ApplicationException("Cannot determine the application name, use ParserOptions to provide it");
+            ParserOptions.Merge(options);
+            ExecutableName = GetExecutableName();
         }
 
         public ArgumentsHelp(IEnumerable<Type>? types = null, ParserOptions? options = null)
@@ -26,17 +24,15 @@ namespace Tsw.Args.Net
             _types = _types.Union(types ?? AppDomain.CurrentDomain.GetAssemblies().ToList().SelectMany(x => Arguments.GetAll(x)));
             if (!_types.Any()) throw new ApplicationException("No types decorated with [Arguments] attribute have been found");
 
-            Options.Merge(options);
-            ExecutableName = options?.ApplicationName 
-                ?? Assembly.GetEntryAssembly()?.GetName().Name 
-                ?? throw new ApplicationException("Cannot determine the application name, use ParserOptions to provide it");
+            ParserOptions.Merge(options);
+            ExecutableName = GetExecutableName();
         }
 
 
         private readonly IEnumerable<Type> _types = [];
 
 
-        public ParserOptions Options { get; private set; } = new ParserOptions()
+        public ParserOptions ParserOptions { get; private set; } = new ParserOptions()
         {
             OptionPrefix = "--",
             OptionShortcutPrefix = "-"
@@ -53,7 +49,7 @@ namespace Tsw.Args.Net
             text.AppendLine("SYNTAX:");
             text.AppendLine(string.Empty);
 
-            var syntaxDoc = new SyntaxDocBuilder(ArgumentsReflection.InstantiateSyntaxVariants(_types), Options).Build();
+            var syntaxDoc = new SyntaxDocBuilder(SyntaxVariantEnumerator.InstantiateSyntaxVariants(ParserOptions, _types), ParserOptions).Build();
             var formatter = new TextFormatter();
 
             GetColumsWidth(syntaxDoc, formatter,
@@ -85,6 +81,21 @@ namespace Tsw.Args.Net
         }
 
 
+        private string GetExecutableName()
+        {
+            if (ParserOptions.ApplicationName != null)
+            {
+                return ParserOptions.ApplicationName;
+            }
+            else
+            {
+                var entryAsseblyName = Assembly.GetEntryAssembly()?.GetName().Name;
+                return entryAsseblyName != null ?
+                    entryAsseblyName.Split('.').Last() :
+                    throw new ApplicationException("Cannot determine the application name, use ParserOptions to provide it");
+            }
+        }
+
         private void GetColumsWidth(SyntaxDoc syntaxDoc, TextFormatter formatter,
             out int argumentNameColumnWidth,
             out int optionNameColumnWidth,
@@ -104,14 +115,20 @@ namespace Tsw.Args.Net
         }
 
 
-        private int GetMaxArgumentLength(List<SyntaxVariantDoc> syntaxDoc) =>
-            syntaxDoc.SelectMany(x => x.Arguments).Max(x => x.Name.Length);
+        private int GetMaxArgumentLength(List<SyntaxVariantDoc> syntaxDoc) => 
+            syntaxDoc.SelectMany(x => x.Arguments).Count() == 0 ?
+                0 :
+                syntaxDoc.SelectMany(x => x.Arguments).Max(x => x.Name.Length);
 
         private int GetMaxOptionShortcutNameLength(List<SyntaxVariantDoc> syntaxDoc) =>
-            syntaxDoc.SelectMany(x => x.Options).Max(x => x.ShortcutName.Length);
+            syntaxDoc.SelectMany(x => x.Options).Count() == 0 ?
+                0 :
+                syntaxDoc.SelectMany(x => x.Options).Max(x => x.ShortcutName.Length);
 
         private int GetMaxOptionNameLength(List<SyntaxVariantDoc> syntaxDoc) =>
-            syntaxDoc.SelectMany(x => x.Options).Max(x => x.Name.Length);
+            syntaxDoc.SelectMany(x => x.Options).Count() == 0 ?
+                0 :
+                syntaxDoc.SelectMany(x => x.Options).Max(x => x.Name.Length);
 
     }
 }

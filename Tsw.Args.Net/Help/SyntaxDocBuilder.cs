@@ -1,17 +1,15 @@
-﻿using System.Reflection;
-
-namespace Tsw.Args.Net.Help
+﻿namespace Tsw.Args.Net.Help
 {
     internal class SyntaxDocBuilder
     {
-        public SyntaxDocBuilder(List<object> syntaxVariants, ParserOptions options)
+        public SyntaxDocBuilder(List<SyntaxVariant> syntaxVariants, ParserOptions options)
         {
-            _options = options;
-            _syntaxVariants = syntaxVariants.FindAll(x => x != null);
+            _parserOptions = options;
+            _syntaxVariants = syntaxVariants;
         }
 
-        private readonly ParserOptions _options;
-        private readonly List<object> _syntaxVariants;
+        private readonly ParserOptions _parserOptions;
+        private readonly List<SyntaxVariant> _syntaxVariants;
 
 
         public SyntaxDoc Build() => new(BuildSyntaxDoc());
@@ -21,16 +19,14 @@ namespace Tsw.Args.Net.Help
         {
             var syntaxDoc = new List<SyntaxVariantDoc>();
 
-            foreach (var variant in _syntaxVariants)
+            foreach (var syntaxVariant in _syntaxVariants)
             {
-                var doc = ArgumentsReflection.GetClassAttribute<DocAttribute>(variant) ?? throw new ApplicationException($"Syntax variant {variant.GetType().FullName} has no [Doc] attribute");
-
-                var arguments = BuildArgumentsDoc(ArgumentsReflection.GetPropertiesWithAttribute<ArgumentAttribute>(variant));
-                var options = BuildOptionsDoc(ArgumentsReflection.GetPropertiesWithAttribute<OptionAttribute>(variant));
+                var arguments = BuildArgumentsDoc(syntaxVariant.ArgumentProperties);
+                var options = BuildOptionsDoc(syntaxVariant.OptionProperties);
 
                 syntaxDoc.Add(new SyntaxVariantDoc(
-                    Text: doc.Text,
-                    SyntaxVariantName: variant.GetType().FullName ?? throw new ApplicationException($"Argument definition class cannot be of a generic type"),
+                    Text: syntaxVariant.DocText,
+                    SyntaxVariantName: syntaxVariant.TypeName,
                     FullSyntax: CreateFullSyntax(arguments, options),
                     Arguments: arguments,
                     Options: options));
@@ -41,23 +37,20 @@ namespace Tsw.Args.Net.Help
         }
 
 
-        private List<ArgumentDoc> BuildArgumentsDoc(IEnumerable<PropertyInfo> properties)
+        private List<ArgumentDoc> BuildArgumentsDoc(List<ArgumentProperty> properties)
         {
             var argumentsDoc = new List<ArgumentDoc>();
 
             foreach (var property in properties)
             {
-                var argument = ArgumentsReflection.GetPropertyAttribute<ArgumentAttribute>(property) ?? throw new ApplicationException($"Property {property.Name} has no [Argument] attribute");
-
-                var doc = ArgumentsReflection.GetPropertyAttribute<DocAttribute>(property) ?? throw new ApplicationException($"Property {property.Name} has no [Doc] attribute");
-                if (string.IsNullOrWhiteSpace(argument.Name) && string.IsNullOrWhiteSpace(argument.RequiredValue)) throw new ApplicationException($"Porperty {property.Name} has neither Name, nor RequiredValue specified in [Argument] attribute");
+                if (string.IsNullOrWhiteSpace(property.ArgumentName) && string.IsNullOrWhiteSpace(property.ArgumentRequiredValue)) throw new ApplicationException($"Porperty {property.Name} has neither Name, nor RequiredValue specified in [Argument] attribute");
 
                 argumentsDoc.Add(new ArgumentDoc(
-                    Name: (string.IsNullOrWhiteSpace(argument!.RequiredValue) ? argument.Name : argument.RequiredValue)!,
-                    Position: argument.Position,
-                    Required: argument.Required,
-                    Text: doc.Text,
-                    FixedValue: !string.IsNullOrWhiteSpace(argument.RequiredValue)));
+                    Name: (string.IsNullOrWhiteSpace(property.ArgumentRequiredValue) ? property.ArgumentName : property.ArgumentRequiredValue)!,
+                    Position: property.ArgumentPosition,
+                    Required: property.ArgumentRequired,
+                    Text: property.DocText,
+                    FixedValue: !string.IsNullOrWhiteSpace(property.ArgumentRequiredValue)));
             }
             argumentsDoc.Sort((x, y) => x.Position - y.Position);
 
@@ -65,24 +58,18 @@ namespace Tsw.Args.Net.Help
         }
 
 
-        private List<OptionDoc> BuildOptionsDoc(IEnumerable<PropertyInfo> properties)
+        private List<OptionDoc> BuildOptionsDoc(List<OptionProperty> properties)
         {
             var optionsDoc = new List<OptionDoc>();
 
             foreach (var property in properties)
             {
-                var option = ArgumentsReflection.GetPropertyAttribute<OptionAttribute>(property) ?? throw new ApplicationException($"Property {property.Name} has no [Option] attribute");
-                if (string.IsNullOrWhiteSpace(option.Name)) throw new ApplicationException($"Porperty {property.Name} has no Name specified in [Option] attribute");
-
-                var doc = ArgumentsReflection.GetPropertyAttribute<DocAttribute>(property) ?? throw new ApplicationException($"Property {property.Name} has no [Doc] attribute");
-
-                var propertyType = ArgumentsReflection.GetPropertyType(property);
-
                 optionsDoc.Add(new OptionDoc(
-                    Name: propertyType.FullName == "System.Boolean" ? $"{_options.OptionPrefix}{option.Name}" : $"{_options.OptionPrefix}{option.Name}=<{propertyType.Name.ToLower()}>",
-                    ShortcutName: string.IsNullOrWhiteSpace(option.ShortcutName) ? string.Empty : $"{_options.OptionShortcutPrefix}{option.ShortcutName}",
-                    Required: option.Required,
-                    Text: doc.Text));
+                    Name: property.TypeName == "Boolean" ? $"{property.OptionFullName}" : $"{property.OptionFullName}=<{property.TypeName.ToLower().Replace("list<", string.Empty).Replace(">", string.Empty)}>",
+                    ShortcutName: string.IsNullOrWhiteSpace(property.OptionShortcutFullName) ? string.Empty : $"{property.OptionShortcutFullName}",
+                    Required: property.OptionRequired,
+                    Text: property.DocText,
+                    Repeatable: !property.IsSingleValue));
             }
             optionsDoc.Sort((x, y) => x.Name.CompareTo(y.Name));
 
@@ -94,7 +81,11 @@ namespace Tsw.Args.Net.Help
         {
             var fullSyntax = string.Empty;
             arguments.ForEach(argument => fullSyntax += argument.Required ? $" {argument.Name}" : $" [{argument.Name}]");
-            options.ForEach(option => fullSyntax += option.Required ? $" {option.Name}" : $" [{option.Name}]");
+            options.ForEach(option =>
+            {
+                var repetitionString = option.Repeatable ? " ..." : string.Empty;
+                fullSyntax += option.Required ? $" {option.Name}{repetitionString}" : $" [{option.Name}{repetitionString}]";
+            });
 
             return fullSyntax.Trim();
         }

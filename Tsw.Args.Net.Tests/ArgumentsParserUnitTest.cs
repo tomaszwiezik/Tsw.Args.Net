@@ -505,5 +505,95 @@ namespace Tsw.Args.Net.Tests
             Assert.Equal(0, result);
         }
 
+        [Fact]
+        public void TestIncorrectDecimalParameters()
+        {
+            var result = GetParser(types: [typeof(DecimalArguments)])
+                .Run<DecimalArguments>(ToArgs("1.a234 -o=3.a14"), (arguments) =>
+                {
+                    Assert.Equal(1.234M, arguments.Positional!.Value);
+                    Assert.Equal(3.14M, arguments.Option!.Value);
+                    return 0;
+                });
+            Assert.Equal(2, result);
+        }
+
+        [Fact]
+        public void TestBooleanPositionalParameters()
+        {
+            var result = GetParser(types: [typeof(BooleanPositionalArguments)])
+                .Run<BooleanPositionalArguments>(ToArgs("someValue"), (arguments) => 0);
+            Assert.Equal(2, result);
+        }
+
+        [Fact]
+        public void TestRequiredListParameters()
+        {
+            var result = GetParser(types: [typeof(ListArguments)])
+                .Run<ListArguments>(ToArgs("-rd=1.1 -rd=1.2 -ri=1 -ri=2 -ri=3 -rs=s1"), (arguments) =>
+                {
+                    Assert.NotNull(arguments.OptionalDecimals);
+                    Assert.NotNull(arguments.OptionalInts);
+                    Assert.NotNull(arguments.OptionalStrings);
+                    Assert.NotNull(arguments.RequiredDecimals);
+                    Assert.NotNull(arguments.RequiredInts);
+                    Assert.NotNull(arguments.RequiredStrings);
+
+                    Assert.Empty(arguments.OptionalDecimals);
+                    Assert.Empty(arguments.OptionalInts);
+                    Assert.Empty(arguments.OptionalStrings);
+                    Assert.Equal(2, arguments.RequiredDecimals.Count);
+                    Assert.Equal(3, arguments.RequiredInts.Count);
+                    Assert.Single(arguments.RequiredStrings);
+
+                    Assert.Equal(1.1M, arguments.RequiredDecimals[0]);
+                    Assert.Equal(1.2M, arguments.RequiredDecimals[1]);
+                    Assert.Equal(1, arguments.RequiredInts[0]);
+                    Assert.Equal(2, arguments.RequiredInts[1]);
+                    Assert.Equal(3, arguments.RequiredInts[2]);
+                    Assert.Equal("s1", arguments.RequiredStrings[0]);
+                    return 0;
+                });
+            Assert.Equal(0, result);
+        }
+
+        [Fact]
+        public void TestRequiredAndOptionalListParameters()
+        {
+            var result = GetParser(types: [typeof(ListArguments)])
+                .Run<ListArguments>(ToArgs("-rd=1.1 -rd=1.2 -ri=1 -ri=2 -ri=3 -rs=s1 -od=2.1 -od=2.2 -oi=11 -oi=12 -oi=13 -os=os1"), (arguments) =>
+                {
+                    Assert.NotNull(arguments.OptionalDecimals);
+                    Assert.NotNull(arguments.OptionalInts);
+                    Assert.NotNull(arguments.OptionalStrings);
+                    Assert.NotNull(arguments.RequiredDecimals);
+                    Assert.NotNull(arguments.RequiredInts);
+                    Assert.NotNull(arguments.RequiredStrings);
+
+                    Assert.Equal(2, arguments.OptionalDecimals.Count);
+                    Assert.Equal(3, arguments.OptionalInts.Count);
+                    Assert.Single(arguments.OptionalStrings);
+                    Assert.Equal(2, arguments.RequiredDecimals.Count);
+                    Assert.Equal(3, arguments.RequiredInts.Count);
+                    Assert.Single(arguments.RequiredStrings);
+
+                    Assert.Equal(1.1M, arguments.RequiredDecimals[0]);
+                    Assert.Equal(1.2M, arguments.RequiredDecimals[1]);
+                    Assert.Equal(1, arguments.RequiredInts[0]);
+                    Assert.Equal(2, arguments.RequiredInts[1]);
+                    Assert.Equal(3, arguments.RequiredInts[2]);
+                    Assert.Equal("s1", arguments.RequiredStrings[0]);
+
+                    Assert.Equal(2.1M, arguments.OptionalDecimals[0]);
+                    Assert.Equal(2.2M, arguments.OptionalDecimals[1]);
+                    Assert.Equal(11, arguments.OptionalInts[0]);
+                    Assert.Equal(12, arguments.OptionalInts[1]);
+                    Assert.Equal(13, arguments.OptionalInts[2]);
+                    Assert.Equal("os1", arguments.OptionalStrings[0]);
+                    return 0;
+                });
+            Assert.Equal(0, result);
+        }
+
     }
 }

@@ -4,5 +4,6 @@
         string Name, 
         string ShortcutName, 
         bool Required, 
-        string Text);
+        string Text,
+        bool Repeatable);
 }

@@ -2,56 +2,29 @@
 {
     internal static class ArgumentsDefinitionConsistency
     {
-        public static void CheckPositions(object syntaxVariant)
+        public static void CheckPositions(ParserOptions options, SyntaxVariant syntaxVariant)
         {
             var positionIndex = new List<int>();
-            foreach (var property in ArgumentsReflection.GetPropertiesWithAttribute<ArgumentAttribute>(syntaxVariant))
+            foreach (var property in syntaxVariant.ArgumentProperties)
             {
-                var attribute = ArgumentsReflection.GetPropertyAttribute<ArgumentAttribute>(property);
-                if (attribute != null)
-                {
-                    if (attribute.Position < 0)
-                    {
-                        throw new ApplicationException($"Argument {property.Name} has no position specified");
-                    }
-                    if (positionIndex.Contains(attribute.Position))
-                    {
-                        throw new ApplicationException($"Argument {property.Name} has a position ({attribute.Position}) that overlaps with other arguments");
-                    }
-
-                    positionIndex.Add(attribute.Position);
-                }
+                if (property.ArgumentPosition < 0) throw new ApplicationException($"Argument {property.Name} has no position specified");
+                if (positionIndex.Contains(property.ArgumentPosition)) throw new ApplicationException($"Argument {property.Name} has a position ({property.ArgumentPosition}) that overlaps with other arguments");
+                positionIndex.Add(property.ArgumentPosition);
             }
         }
 
 
-        public static void CheckAmbiguity(object syntaxVariant)
+        public static void CheckAmbiguity(ParserOptions options, SyntaxVariant syntaxVariant)
         {
             var optionIndex = new List<string>();
-            foreach (var property in ArgumentsReflection.GetPropertiesWithAttribute<OptionAttribute>(syntaxVariant))
+            foreach (var property in syntaxVariant.OptionProperties)
             {
-                var attribute = ArgumentsReflection.GetPropertyAttribute<OptionAttribute>(property);
-                if (attribute != null)
-                {
-                    var name = attribute.Name;
-                    var shortcut = attribute.ShortcutName;
+                if (property.OptionName == null) throw new ApplicationException($"Option {property.Name} name is not specified");
+                if (optionIndex.Contains(property.OptionName)) throw new ApplicationException($"Option {property.Name} name ({property.OptionName}) is ambiguous, it has already been used with other option");
+                if (property.OptionShortcutName != null && optionIndex.Contains(property.OptionShortcutName)) throw new ApplicationException($"Option {property.Name} shortcut ({property.OptionShortcutName}) is ambiguous, it has already been used with other option");
 
-                    if (name == null)
-                    {
-                        throw new ApplicationException($"Option {property.Name} name is not specified");
-                    }
-                    if (optionIndex.Contains(name))
-                    {
-                        throw new ApplicationException($"Option {property.Name} name ({name}) is ambiguous, it has already been used with other option");
-                    }
-                    if (shortcut != null && optionIndex.Contains(shortcut))
-                    {
-                        throw new ApplicationException($"Option {property.Name} shortcut ({shortcut}) is ambiguous, it has already been used with other option");
-                    }
-
-                    if (name != null) optionIndex.Add(name);
-                    if (shortcut != null) optionIndex.Add(shortcut);
-                }
+                optionIndex.Add(property.OptionName);
+                if (property.OptionShortcutName != null) optionIndex.Add(property.OptionShortcutName);
             }
         }
 

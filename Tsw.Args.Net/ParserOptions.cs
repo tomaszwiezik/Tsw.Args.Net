@@ -18,16 +18,41 @@
         /// </summary>
         public string? OptionShortcutPrefix { get; set; }
 
+        /// <summary>
+        /// The separator between option name and its value.
+        /// </summary>
+        public char? OptionValueSeparator { get; set; }
 
         /// <summary>
-        /// Combines current values with those provided in options parameter. All non-null values in options overwrite current values.
+        /// If true, then values to options are provided as separate arguments.
+        /// Example 1: UseStandaloneValues is false and OptionValueSeparator is '=', the option values must be provided as: --option=value
+        /// Example 2: UseStandaloneValues is true, option values must be provided as: --option value
+        /// </summary>
+        public bool? UseStandaloneValues { get; set; }
+
+
+        public ParserOptions SetDefaultValues()
+        {
+            ApplicationName = string.Empty;
+            OptionPrefix = "--";
+            OptionShortcutPrefix = "-";
+            OptionValueSeparator = '=';
+            UseStandaloneValues = false;
+            return this;
+        }
+
+        /// <summary>
+        /// Combines current values with these provided in options parameter. All non-null values in options overwrite the current values.
         /// </summary>
         /// <param name="options">New values.</param>
-        public void Merge(ParserOptions? options)
+        public ParserOptions Merge(ParserOptions? options)
         {
-            if (options?.ApplicationName != null) ApplicationName = options.ApplicationName;
-            if (options?.OptionPrefix != null) OptionPrefix = options.OptionPrefix;
-            if (options?.OptionShortcutPrefix != null) OptionShortcutPrefix = options.OptionShortcutPrefix;
+            ApplicationName = options?.ApplicationName ?? ApplicationName;
+            OptionPrefix = options?.OptionPrefix ?? OptionPrefix;
+            OptionShortcutPrefix = options?.OptionShortcutPrefix ?? OptionShortcutPrefix;
+            OptionValueSeparator = options?.OptionValueSeparator ?? OptionValueSeparator;
+            UseStandaloneValues |= options?.UseStandaloneValues ?? false;
+            return this;
         }
     }
 }

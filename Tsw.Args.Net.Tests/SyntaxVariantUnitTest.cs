@@ -7,182 +7,123 @@ namespace Tsw.Args.Net.Tests
         [Fact]
         public void TestArgumentProperties()
         {
-            var options = new ParserOptions();
-            var syntaxVariant = new SyntaxVariant(options, new SampleMixedArguments());
+            var options = new ParserOptions().SetDefaultValues();
+            var syntaxVariant = new SyntaxVariant(options, new AllPossibleAttributeParametersCombinations());
 
             Assert.Equal(3, syntaxVariant.ArgumentProperties.Count);
             {
-                var property = syntaxVariant.ArgumentProperties.Find(x => x.Name == "Command");
+                var property = syntaxVariant.ArgumentProperties.Find(x => x.Name == "RAString");
                 Assert.NotNull(property);
                 Assert.Null(property.ArgumentName);
                 Assert.True(property.ArgumentRequired);
-                Assert.Equal("command", property.ArgumentRequiredValue);
+                Assert.Equal("RAString", property.ArgumentRequiredValue);
                 Assert.Equal(0, property.ArgumentPosition);
                 Assert.Equal("String", property.TypeName);
+                Assert.True(property.IsSingleValue);
+                Assert.True(property.IsNullable);
             }
             {
-                var property = syntaxVariant.ArgumentProperties.Find(x => x.Name == "File");
+                var property = syntaxVariant.ArgumentProperties.Find(x => x.Name == "RAInt32");
                 Assert.NotNull(property);
-                Assert.Equal("<file>", property.ArgumentName);
+                Assert.Equal("RAInt32", property.ArgumentName);
                 Assert.True(property.ArgumentRequired);
                 Assert.Null(property.ArgumentRequiredValue);
                 Assert.Equal(1, property.ArgumentPosition);
-                Assert.Equal("String", property.TypeName);
+                Assert.Equal("Int32", property.TypeName);
+                Assert.True(property.IsSingleValue);
+                Assert.True(property.IsNullable);
             }
             {
-                var property = syntaxVariant.ArgumentProperties.Find(x => x.Name == "OutputFile");
+                var property = syntaxVariant.ArgumentProperties.Find(x => x.Name == "OAString");
                 Assert.NotNull(property);
-                Assert.Equal("<output_file>", property.ArgumentName);
+                Assert.Equal("OAString", property.ArgumentName);
                 Assert.False(property.ArgumentRequired);
                 Assert.Null(property.ArgumentRequiredValue);
                 Assert.Equal(2, property.ArgumentPosition);
                 Assert.Equal("String", property.TypeName);
+                Assert.True(property.IsSingleValue);
+                Assert.True(property.IsNullable);
             }
         }
 
         [Fact]
-        public void TestSingleValueOptionProperties()
+        public void TestOptionProperties()
         {
-            var options = new ParserOptions
-            {
-                OptionPrefix = "--",
-                OptionShortcutPrefix = "-"
-            };
-            var syntaxVariant = new SyntaxVariant(options, new SampleMixedArguments());
+            var options = new ParserOptions().SetDefaultValues();
+            var syntaxVariant = new SyntaxVariant(options, new AllPossibleAttributeParametersCombinations());
 
             Assert.Equal(6, syntaxVariant.OptionProperties.Count);
             {
-                var property = syntaxVariant.OptionProperties.Find(x => x.Name == "BoolRequired");
+                var property = syntaxVariant.OptionProperties.Find(x => x.Name == "ROBool");
                 Assert.NotNull(property);
-                Assert.Equal("boolRequired", property.OptionName);
-                Assert.Equal("--boolRequired", property.OptionFullName);
-                Assert.Equal("br", property.OptionShortcutName);
-                Assert.Equal("-br", property.OptionShortcutFullName);
+                Assert.Equal("ROBool", property.OptionName);
+                Assert.Equal("--ROBool", property.OptionFullName);
+                Assert.Null(property.OptionShortcutName);
+                Assert.Null(property.OptionShortcutFullName);
                 Assert.True(property.OptionRequired);
                 Assert.Equal("Boolean", property.TypeName);
+                Assert.True(property.IsSingleValue);
+                Assert.True(property.IsNullable);
             }
             {
-                var property = syntaxVariant.OptionProperties.Find(x => x.Name == "StringRequired");
+                var property = syntaxVariant.OptionProperties.Find(x => x.Name == "OOBool");
                 Assert.NotNull(property);
-                Assert.Equal("stringRequired", property.OptionName);
-                Assert.Equal("--stringRequired", property.OptionFullName);
-                Assert.Equal("sr", property.OptionShortcutName);
-                Assert.Equal("-sr", property.OptionShortcutFullName);
-                Assert.True(property.OptionRequired);
-                Assert.Equal("String", property.TypeName);
-            }
-            {
-                var property = syntaxVariant.OptionProperties.Find(x => x.Name == "IntRequired");
-                Assert.NotNull(property);
-                Assert.Equal("intRequired", property.OptionName);
-                Assert.Equal("--intRequired", property.OptionFullName);
-                Assert.Equal("ir", property.OptionShortcutName);
-                Assert.Equal("-ir", property.OptionShortcutFullName);
-                Assert.True(property.OptionRequired);
-                Assert.Equal("Int32", property.TypeName);
-            }
-            {
-                var property = syntaxVariant.OptionProperties.Find(x => x.Name == "BoolOptional");
-                Assert.NotNull(property);
-                Assert.Equal("boolOptional", property.OptionName);
-                Assert.Equal("--boolOptional", property.OptionFullName);
-                Assert.Equal("bo", property.OptionShortcutName);
-                Assert.Equal("-bo", property.OptionShortcutFullName);
+                Assert.Equal("OOBool", property.OptionName);
+                Assert.Equal("--OOBool", property.OptionFullName);
+                Assert.Equal("oob", property.OptionShortcutName);
+                Assert.Equal("-oob", property.OptionShortcutFullName);
                 Assert.False(property.OptionRequired);
                 Assert.Equal("Boolean", property.TypeName);
+                Assert.True(property.IsSingleValue);
+                Assert.True(property.IsNullable);
             }
             {
-                var property = syntaxVariant.OptionProperties.Find(x => x.Name == "StringOptional");
+                var property = syntaxVariant.OptionProperties.Find(x => x.Name == "ROInt32");
                 Assert.NotNull(property);
-                Assert.Equal("stringOptional", property.OptionName);
-                Assert.Equal("--stringOptional", property.OptionFullName);
-                Assert.Equal("so", property.OptionShortcutName);
-                Assert.Equal("-so", property.OptionShortcutFullName);
-                Assert.False(property.OptionRequired);
-                Assert.Equal("String", property.TypeName);
+                Assert.Equal("ROInt32", property.OptionName);
+                Assert.Equal("--ROInt32", property.OptionFullName);
+                Assert.Equal("roi", property.OptionShortcutName);
+                Assert.Equal("-roi", property.OptionShortcutFullName);
+                Assert.True(property.OptionRequired);
+                Assert.Equal("Int32", property.TypeName);
+                Assert.True(property.IsSingleValue);
+                Assert.True(property.IsNullable);
             }
             {
-                var property = syntaxVariant.OptionProperties.Find(x => x.Name == "IntOptional");
+                var property = syntaxVariant.OptionProperties.Find(x => x.Name == "OOInt32");
                 Assert.NotNull(property);
-                Assert.Equal("intOptional", property.OptionName);
-                Assert.Equal("--intOptional", property.OptionFullName);
-                Assert.Equal("io", property.OptionShortcutName);
-                Assert.Equal("-io", property.OptionShortcutFullName);
+                Assert.Equal("OOInt32", property.OptionName);
+                Assert.Equal("--OOInt32", property.OptionFullName);
+                Assert.Null(property.OptionShortcutName);
+                Assert.Null(property.OptionShortcutFullName);
                 Assert.False(property.OptionRequired);
                 Assert.Equal("Int32", property.TypeName);
-            }
-        }
-
-        [Fact]
-        public void TestMultipleValueOptionProperties()
-        {
-            var options = new ParserOptions
-            {
-                OptionPrefix = "--",
-                OptionShortcutPrefix = "-"
-            };
-            var syntaxVariant = new SyntaxVariant(options, new ListArguments());
-
-            Assert.Equal(6, syntaxVariant.OptionProperties.Count);
-            {
-                var property = syntaxVariant.OptionProperties.Find(x => x.Name == "RequiredDecimals");
-                Assert.NotNull(property);
-                Assert.Equal("requiredDecimal", property.OptionName);
-                Assert.Equal("--requiredDecimal", property.OptionFullName);
-                Assert.Equal("rd", property.OptionShortcutName);
-                Assert.Equal("-rd", property.OptionShortcutFullName);
-                Assert.True(property.OptionRequired);
-                Assert.Equal("List<Decimal>", property.TypeName);
+                Assert.True(property.IsSingleValue);
+                Assert.True(property.IsNullable);
             }
             {
-                var property = syntaxVariant.OptionProperties.Find(x => x.Name == "RequiredInts");
+                var property = syntaxVariant.OptionProperties.Find(x => x.Name == "ROListInt32");
                 Assert.NotNull(property);
-                Assert.Equal("requiredInt", property.OptionName);
-                Assert.Equal("--requiredInt", property.OptionFullName);
-                Assert.Equal("ri", property.OptionShortcutName);
-                Assert.Equal("-ri", property.OptionShortcutFullName);
+                Assert.Equal("ROListInt32", property.OptionName);
+                Assert.Equal("--ROListInt32", property.OptionFullName);
+                Assert.Null(property.OptionShortcutName);
+                Assert.Null(property.OptionShortcutFullName);
                 Assert.True(property.OptionRequired);
                 Assert.Equal("List<Int32>", property.TypeName);
+                Assert.False(property.IsSingleValue);
+                Assert.True(property.IsNullable);
             }
             {
-                var property = syntaxVariant.OptionProperties.Find(x => x.Name == "RequiredStrings");
+                var property = syntaxVariant.OptionProperties.Find(x => x.Name == "OOListInt32");
                 Assert.NotNull(property);
-                Assert.Equal("requiredString", property.OptionName);
-                Assert.Equal("--requiredString", property.OptionFullName);
-                Assert.Equal("rs", property.OptionShortcutName);
-                Assert.Equal("-rs", property.OptionShortcutFullName);
-                Assert.True(property.OptionRequired);
-                Assert.Equal("List<String>", property.TypeName);
-            }
-            {
-                var property = syntaxVariant.OptionProperties.Find(x => x.Name == "OptionalDecimals");
-                Assert.NotNull(property);
-                Assert.Equal("optionalDecimal", property.OptionName);
-                Assert.Equal("--optionalDecimal", property.OptionFullName);
-                Assert.Equal("od", property.OptionShortcutName);
-                Assert.Equal("-od", property.OptionShortcutFullName);
-                Assert.False(property.OptionRequired);
-                Assert.Equal("List<Decimal>", property.TypeName);
-            }
-            {
-                var property = syntaxVariant.OptionProperties.Find(x => x.Name == "OptionalInts");
-                Assert.NotNull(property);
-                Assert.Equal("optionalInt", property.OptionName);
-                Assert.Equal("--optionalInt", property.OptionFullName);
-                Assert.Equal("oi", property.OptionShortcutName);
-                Assert.Equal("-oi", property.OptionShortcutFullName);
+                Assert.Equal("OOListInt32", property.OptionName);
+                Assert.Equal("--OOListInt32", property.OptionFullName);
+                Assert.Equal("ool", property.OptionShortcutName);
+                Assert.Equal("-ool", property.OptionShortcutFullName);
                 Assert.False(property.OptionRequired);
                 Assert.Equal("List<Int32>", property.TypeName);
-            }
-            {
-                var property = syntaxVariant.OptionProperties.Find(x => x.Name == "OptionalStrings");
-                Assert.NotNull(property);
-                Assert.Equal("optionalString", property.OptionName);
-                Assert.Equal("--optionalString", property.OptionFullName);
-                Assert.Equal("os", property.OptionShortcutName);
-                Assert.Equal("-os", property.OptionShortcutFullName);
-                Assert.False(property.OptionRequired);
-                Assert.Equal("List<String>", property.TypeName);
+                Assert.False(property.IsSingleValue);
+                Assert.True(property.IsNullable);
             }
         }
 

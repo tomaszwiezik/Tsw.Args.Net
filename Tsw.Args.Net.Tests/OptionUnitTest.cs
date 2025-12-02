@@ -6,35 +6,44 @@
         public void TestInitializationWithValue()
         {
             var nameValue = "name=value";
-            var option = new Option(nameValue);
+            var option = new Option(new ParserOptions().SetDefaultValues(), nameValue);
 
             Assert.Equal("name", option.Name);
             Assert.Equal("value", option.Value);
             Assert.True(option.HasValue);
         }
 
-
         [Fact]
         public void TestInitializationWithValueContainingEqualChar()
         {
             var nameValue = "name=value=999";
-            var option = new Option(nameValue);
+            var option = new Option(new ParserOptions().SetDefaultValues(), nameValue);
 
             Assert.Equal("name", option.Name);
             Assert.Equal("value=999", option.Value);
             Assert.True(option.HasValue);
         }
 
-
         [Fact]
         public void TestInitializationWithoutValue()
         {
             var nameValue = "name";
-            var option = new Option(nameValue);
+            var option = new Option(new ParserOptions().SetDefaultValues(), nameValue);
 
             Assert.Equal("name", option.Name);
             Assert.Null(option.Value);
             Assert.False(option.HasValue);
+        }
+
+        [Fact]
+        public void TestInitializationWithColonSeparator()
+        {
+            var nameValue = "name:value=999";
+            var option = new Option(new ParserOptions().SetDefaultValues().Merge(new ParserOptions { OptionValueSeparator = ':' }), nameValue);
+
+            Assert.Equal("name", option.Name);
+            Assert.Equal("value=999", option.Value);
+            Assert.True(option.HasValue);
         }
 
     }

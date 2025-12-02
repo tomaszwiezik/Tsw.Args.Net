@@ -2,9 +2,9 @@
 {
     internal class Option
     {
-        public Option(string option)
+        public Option(ParserOptions parserOptions, string option)
         {
-            var optionNameValue = option.Split('=', 2);
+            var optionNameValue = option.Split(parserOptions.OptionValueSeparator!.Value, 2);
             Name = optionNameValue[0];
             Value = optionNameValue.Length == 2 ? optionNameValue[1] : null;
         }

@@ -5,9 +5,9 @@ namespace Tsw.Args.Net
     internal class OptionProperty : Property
     {
         public OptionProperty(ParserOptions parserOptions, SyntaxVariant owner, PropertyInfo propertyInfo)
-            : base(parserOptions, owner, propertyInfo, ["Boolean", "Decimal", "Int16", "Int32", "Int64", "String", "List<Decimal>", "List<Int16>", "List<Int32>", "List<64>", "List<String>"])
+            : base(parserOptions, owner, propertyInfo, ["Boolean", "Byte", "Decimal", "Int16", "Int32", "Int64", "String", "UInt16", "UInt32", "UInt64", "List<Byte>", "List<Decimal>", "List<Int16>", "List<Int32>", "List<Int64>", "List<String>", "List<UInt16>", "List<UInt32>", "List<UInt64>"])
         {
-            _attribute = propertyInfo.GetCustomAttribute<OptionAttribute>() ?? throw new ApplicationException($"Property {propertyInfo.Name} has no [Option] attribute.");
+            _attribute = propertyInfo.GetCustomAttribute<OptionAttribute>() ?? throw new ParserException(Owner.TypeName, Name, $"Missing [Option] attribute.");
         }
 
         private readonly OptionAttribute _attribute;

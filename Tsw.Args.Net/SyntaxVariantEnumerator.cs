@@ -7,7 +7,7 @@ namespace Tsw.Args.Net
         public static List<SyntaxVariant> InstantiateSyntaxVariants(ParserOptions parserOptions, IEnumerable<Type> types) =>
             [..types
                 .Where(x => x.IsClass && x.GetCustomAttribute<ArgumentsAttribute>() != null)
-                .Select(x => Activator.CreateInstance(x) ?? throw new ApplicationException($"Type {x.FullName} cannot be instantiated"))
+                .Select(x => Activator.CreateInstance(x) ?? throw new ParserException($"Type {x.FullName} cannot be instantiated"))
                 .Select(x => new SyntaxVariant(parserOptions, x))
             ];
     }

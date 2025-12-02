@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
 using Tsw.Args.Net.Parser;
 
 namespace Tsw.Args.Net
@@ -24,7 +25,7 @@ namespace Tsw.Args.Net
                 Arguments.GetAll(assembly) :
                 AppDomain.CurrentDomain.GetAssemblies().ToList().SelectMany(x => Arguments.GetAll(x))
                 );
-            if (!_types.Any()) throw new ApplicationException("No types decorated with [Arguments] attribute have been found");
+            if (!_types.Any()) throw new ParserException("No types decorated with [Arguments] attribute have been found");
 
             ParserOptions.Merge(options);
         }
@@ -32,7 +33,7 @@ namespace Tsw.Args.Net
         public ArgumentsParser(IEnumerable<Type>? types = null, ParserOptions? options = null)
         {
             _types = _types.Union(types ?? AppDomain.CurrentDomain.GetAssemblies().ToList().SelectMany(x => Arguments.GetAll(x)));
-            if (!_types.Any()) throw new ApplicationException("No types decorated with [Arguments] attribute have been found");
+            if (!_types.Any()) throw new ParserException("No types decorated with [Arguments] attribute have been found");
 
             ParserOptions.Merge(options);
         }
@@ -40,11 +41,7 @@ namespace Tsw.Args.Net
         private readonly IEnumerable<Type> _types = [];
 
 
-        public ParserOptions ParserOptions { get; private set; } = new ParserOptions()
-        {
-            OptionPrefix = "--",
-            OptionShortcutPrefix = "-"
-        };
+        public ParserOptions ParserOptions { get; private set; } = new ParserOptions().SetDefaultValues();
 
 
         /// <summary>
@@ -82,6 +79,9 @@ namespace Tsw.Args.Net
             }
             catch (HelpRequestedException)
             {
+#if DEBUG
+                Debug.WriteLine("HelpRequestedException");
+#endif
                 if (onHelpRequested != null)
                 {
                     return onHelpRequested();
@@ -94,6 +94,9 @@ namespace Tsw.Args.Net
             }
             catch (SyntaxException ex)
             {
+#if DEBUG
+                Debug.WriteLine(ex.ToString());
+#endif
                 if (onSyntaxError != null)
                 {
                     return onSyntaxError(ex.Message);
@@ -106,6 +109,9 @@ namespace Tsw.Args.Net
             }
             catch (Exception ex)
             {
+#if DEBUG
+                Debug.WriteLine(ex.ToString());
+#endif
                 if (onError != null)
                 {
                     return onError(ex);
@@ -123,13 +129,19 @@ namespace Tsw.Args.Net
         {
             if (args.Length == 1 && (args[0] == $"{ParserOptions.OptionPrefix}help" || args[0] == $"{ParserOptions.OptionShortcutPrefix}h")) throw new HelpRequestedException();
 
+            var clArguments = args.ToList();
             var syntaxVariants = SyntaxVariantEnumerator.InstantiateSyntaxVariants(ParserOptions, _types);
-            var arguments = ExtractArguments(args);
-            var options = ExtractOptions(args);
             var parsedSyntaxVariants = new List<SyntaxVariant>();
 
             for (int i = 0; i < syntaxVariants.Count; i++)
             {
+                if (ParserOptions.UseStandaloneValues == true)
+                {
+                    clArguments = new StandaloneValuesInterpreter(ParserOptions, syntaxVariants[i]).Translate(clArguments);
+                }
+                var arguments = ExtractArguments(clArguments);
+                var options = ExtractOptions(clArguments);
+
                 var syntaxVariant = ParseOptions(options, ParseArguments(arguments, syntaxVariants[i]));
                 if (syntaxVariant != null)
                 {
@@ -143,7 +155,7 @@ namespace Tsw.Args.Net
             {
                 1 => selectedSyntaxVariants[0].ArgumentsDefinitionObject,
                 0 => throw new SyntaxException($"Missing or incorrect arguments; use {ParserOptions.OptionPrefix}help or {ParserOptions.OptionShortcutPrefix}h option to display help"),
-                _ => throw new SyntaxException("Ambiguous syntax definition, multiple syntax variants match provided arguments")
+                _ => throw new ParserException("Ambiguous syntax definition, multiple syntax variants match provided arguments")
             };
         }
 
@@ -151,24 +163,24 @@ namespace Tsw.Args.Net
         private T Parse<T>(string[] args) where T : class => (T)Parse(args);
 
 
-        private List<string> ExtractArguments(string[] args) => args
-            .ToList()
+        private List<string> ExtractArguments(List<string> args) => args
+            //.ToList()
             .FindAll(x => !x.StartsWith(ParserOptions.OptionPrefix!) && !x.StartsWith(ParserOptions.OptionShortcutPrefix!));
 
 
-        private List<Option> ExtractOptions(string[] args) => [..args
-            .ToList()
+        private List<Option> ExtractOptions(List<string> args) => [..args
+            //.ToList()
             .FindAll(x => x.StartsWith(ParserOptions.OptionPrefix!) || x.StartsWith(ParserOptions.OptionShortcutPrefix!))
-            .Select(x => new Option(x))];
+            .Select(x => new Option(ParserOptions, x))];
 
 
         private SyntaxVariant? ParseArguments(List<string> arguments, SyntaxVariant? syntaxVariant)
         {
             if (syntaxVariant == null) return null;
 
-            ArgumentsDefinitionConsistency.CheckPositions(ParserOptions, syntaxVariant);
+            ArgumentsDefinitionConsistency.CheckArgumentDefinitions(ParserOptions, syntaxVariant);
 
-            if (arguments.Count > syntaxVariant.ArgumentProperties.Count()) return null;   // There are more arguments than the variant can accept
+            if (arguments.Count > syntaxVariant.ArgumentProperties.Count) return null;   // There are more arguments than the variant can accept
 
             for (int position = 0; position < arguments.Count; position++)
             {
@@ -192,7 +204,7 @@ namespace Tsw.Args.Net
             if (syntaxVariant == null) return null;
 
             var usedOptions = new Dictionary<string, int>();
-            ArgumentsDefinitionConsistency.CheckAmbiguity(ParserOptions, syntaxVariant);
+            ArgumentsDefinitionConsistency.CheckOptionDefinitions(ParserOptions, syntaxVariant);
 
             foreach (var option in options)
             {

@@ -9,6 +9,9 @@
 
         public string? RequiredValue { get; set; }
 
+        /// <summary>
+        /// A zero-based argument position in the command-line argument list.
+        /// </summary>
         public int Position { get; set; } = -1;
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace Tsw.Args.Net.SampleListArguments
+﻿using System.Globalization;
+
+namespace Tsw.Args.Net.SampleListArguments
 {
     internal class Program
     {

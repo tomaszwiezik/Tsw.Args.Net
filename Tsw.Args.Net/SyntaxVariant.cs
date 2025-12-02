@@ -6,10 +6,11 @@ namespace Tsw.Args.Net
     {
         public SyntaxVariant(ParserOptions parserOptions, object instance)
         {
-            _parserOptions = parserOptions;
-            _docAttribute = instance.GetType().GetCustomAttribute<DocAttribute>() ?? throw new ApplicationException($"Syntax variant {instance.GetType().FullName} has no [Doc] attribute");
             ArgumentsDefinitionObject = instance;
             TypeName = instance.GetType().Name; //?? throw new ApplicationException($"Argument definition class cannot be of a generic type");
+            _parserOptions = parserOptions;
+            _docAttribute = instance.GetType().GetCustomAttribute<DocAttribute>() ?? throw new ParserException(TypeName, "Missing [Doc] attribute");
+
             ArgumentProperties = GetArgumentProperties(instance);
             OptionProperties = GetOptionProperties(instance);
         }

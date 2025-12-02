@@ -21,6 +21,9 @@
 
             foreach (var syntaxVariant in _syntaxVariants)
             {
+                ArgumentsDefinitionConsistency.CheckArgumentDefinitions(_parserOptions, syntaxVariant);
+                ArgumentsDefinitionConsistency.CheckOptionDefinitions(_parserOptions, syntaxVariant);
+
                 var arguments = BuildArgumentsDoc(syntaxVariant.ArgumentProperties);
                 var options = BuildOptionsDoc(syntaxVariant.OptionProperties);
 
@@ -43,7 +46,7 @@
 
             foreach (var property in properties)
             {
-                if (string.IsNullOrWhiteSpace(property.ArgumentName) && string.IsNullOrWhiteSpace(property.ArgumentRequiredValue)) throw new ApplicationException($"Porperty {property.Name} has neither Name, nor RequiredValue specified in [Argument] attribute");
+                if (string.IsNullOrWhiteSpace(property.ArgumentName) && string.IsNullOrWhiteSpace(property.ArgumentRequiredValue)) throw new ParserException(property.Owner.TypeName, property.Name, "Neither Name, nor RequiredValue parameter is specified in [Argument] attribute");
 
                 argumentsDoc.Add(new ArgumentDoc(
                     Name: (string.IsNullOrWhiteSpace(property.ArgumentRequiredValue) ? property.ArgumentName : property.ArgumentRequiredValue)!,
@@ -61,11 +64,13 @@
         private List<OptionDoc> BuildOptionsDoc(List<OptionProperty> properties)
         {
             var optionsDoc = new List<OptionDoc>();
+            var optionValueSeparator = _parserOptions.UseStandaloneValues == true ? ' ' : _parserOptions.OptionValueSeparator;
+
 
             foreach (var property in properties)
             {
                 optionsDoc.Add(new OptionDoc(
-                    Name: property.TypeName == "Boolean" ? $"{property.OptionFullName}" : $"{property.OptionFullName}=<{property.TypeName.ToLower().Replace("list<", string.Empty).Replace(">", string.Empty)}>",
+                    Name: property.TypeName == "Boolean" ? $"{property.OptionFullName}" : $"{property.OptionFullName}{optionValueSeparator}<{property.TypeName.ToLower().Replace("list<", string.Empty).Replace(">", string.Empty)}>",
                     ShortcutName: string.IsNullOrWhiteSpace(property.OptionShortcutFullName) ? string.Empty : $"{property.OptionShortcutFullName}",
                     Required: property.OptionRequired,
                     Text: property.DocText,

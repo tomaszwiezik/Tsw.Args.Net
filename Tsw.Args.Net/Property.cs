@@ -7,20 +7,20 @@ namespace Tsw.Args.Net
     {
         public Property(ParserOptions parserOptions, SyntaxVariant owner, PropertyInfo propertyInfo, IEnumerable<string> supportedTypes)
         {
-            _owner = owner;
             _parserOptions = parserOptions;
-            _propertyInfo = propertyInfo ?? throw new ApplicationException($"Property info must ne be null");
-            _docAttribute = propertyInfo.GetCustomAttribute<DocAttribute>() ?? throw new ApplicationException($"Property {propertyInfo.Name} has no [Doc] attribute.");
+            _propertyInfo = propertyInfo ?? throw new ParserException(owner.TypeName, "Property info must not be null");
+            _docAttribute = propertyInfo.GetCustomAttribute<DocAttribute>() ?? throw new ParserException(owner.TypeName, "Missing [Doc] attribute");
             _supportedTypes = supportedTypes;
+            Owner = owner;
             TypeName = GetTypeName();
         }
 
-        private readonly SyntaxVariant _owner;
         protected readonly ParserOptions _parserOptions;
         protected readonly PropertyInfo _propertyInfo;
         private readonly DocAttribute _docAttribute;
         private readonly IEnumerable<string> _supportedTypes;
 
+        public SyntaxVariant Owner { get; }
         public string DocText => _docAttribute.Text;
         public string TypeName { get; }
         /// <summary>
@@ -31,30 +31,43 @@ namespace Tsw.Args.Net
         public bool IsSingleValue => !TypeName.Contains("List<");
 
 
-        public object? GetValue() => _propertyInfo.GetValue(_owner.ArgumentsDefinitionObject);
+        //public bool IsNullable => Nullable.GetUnderlyingType(_propertyInfo.PropertyType) != null;
+        /// <summary>
+        /// Indicates if the property is declared as nullable value.
+        /// </summary>
+        public bool IsNullable => new NullabilityInfoContext().Create(_propertyInfo).ReadState == NullabilityState.Nullable;
 
+        public object? GetValue() => _propertyInfo.GetValue(Owner.ArgumentsDefinitionObject);
 
         public void SetValue(string? value)
         {
             switch (TypeName)
             {
-                case "Boolean": _propertyInfo.SetValue(_owner.ArgumentsDefinitionObject, true); break;
-                case "Decimal": _propertyInfo.SetValue(_owner.ArgumentsDefinitionObject, decimal.Parse(value!, CultureInfo.InvariantCulture)); break;
-                case "Int16": _propertyInfo.SetValue(_owner.ArgumentsDefinitionObject, Convert.ToInt16(value)); break;
-                case "Int32": _propertyInfo.SetValue(_owner.ArgumentsDefinitionObject, Convert.ToInt32(value)); break;
-                case "Int64": _propertyInfo.SetValue(_owner.ArgumentsDefinitionObject, Convert.ToInt64(value)); break;
-                case "String": _propertyInfo.SetValue(_owner.ArgumentsDefinitionObject, value); break;
+                case "Boolean": _propertyInfo.SetValue(Owner.ArgumentsDefinitionObject, true); break;
+                case "Byte": _propertyInfo.SetValue(Owner.ArgumentsDefinitionObject, Convert.ToByte(value)); break;
+                case "Decimal": _propertyInfo.SetValue(Owner.ArgumentsDefinitionObject, decimal.Parse(value!.Replace(",", "!"), CultureInfo.InvariantCulture)); break;   // Replace is to enforce incorrect format when coma is detected
+                case "Int16": _propertyInfo.SetValue(Owner.ArgumentsDefinitionObject, Convert.ToInt16(value)); break;
+                case "Int32": _propertyInfo.SetValue(Owner.ArgumentsDefinitionObject, Convert.ToInt32(value)); break;
+                case "Int64": _propertyInfo.SetValue(Owner.ArgumentsDefinitionObject, Convert.ToInt64(value)); break;
+                case "String": _propertyInfo.SetValue(Owner.ArgumentsDefinitionObject, value); break;
+                case "UInt16": _propertyInfo.SetValue(Owner.ArgumentsDefinitionObject, Convert.ToUInt16(value)); break;
+                case "UInt32": _propertyInfo.SetValue(Owner.ArgumentsDefinitionObject, Convert.ToUInt32(value)); break;
+                case "UInt64": _propertyInfo.SetValue(Owner.ArgumentsDefinitionObject, Convert.ToUInt64(value)); break;
+                case "List<Byte>": SetListValue(Convert.ToByte(value)); break;
                 case "List<Decimal>": SetListValue(decimal.Parse(value!, CultureInfo.InvariantCulture)); break;
                 case "List<Int16>": SetListValue(Convert.ToInt16(value)); break;
                 case "List<Int32>": SetListValue(Convert.ToInt32(value)); break;
                 case "List<Int64>": SetListValue(Convert.ToInt64(value)); break;
                 case "List<String>": SetListValue(value); break;
+                case "List<UInt16>": SetListValue(Convert.ToUInt16(value)); break;
+                case "List<UInt32>": SetListValue(Convert.ToUInt32(value)); break;
+                case "List<UInt64>": SetListValue(Convert.ToUInt64(value)); break;
             }
         }
 
         private void SetListValue<T>(T value)
         {
-            if (GetValue() == null) _propertyInfo.SetValue(_owner.ArgumentsDefinitionObject, new List<T>());
+            if (GetValue() == null) _propertyInfo.SetValue(Owner.ArgumentsDefinitionObject, new List<T>());
             (GetValue() as List<T>)!.Add(value);
         }
 
@@ -64,13 +77,13 @@ namespace Tsw.Args.Net
             if (Nullable.GetUnderlyingType(_propertyInfo.PropertyType) != null) return Nullable.GetUnderlyingType(_propertyInfo.PropertyType)!;
             if (!_propertyInfo.PropertyType.IsValueType) return _propertyInfo.PropertyType;
 
-            throw new ApplicationException($"{_propertyInfo.Name}: properties decorated with [Argument] or [Option] attributes must be nullable");
+            throw new ParserException(Owner.TypeName, Name, "Properties decorated with [Argument] or [Option] attributes must be nullable");
         }
 
         private string GetTypeName()
         {
             var type = GetPropertyType();
-            var typeName = type.FullName ?? throw new ApplicationException($"Property {_propertyInfo.Name}: cannot determine type");
+            var typeName = type.FullName ?? throw new ParserException(Owner.TypeName, Name, $"Cannot determine type");
             if (typeName.StartsWith("System.") && !IsGenericType(typeName))
             {
                 typeName = typeName.Substring("System.".Length);
@@ -86,7 +99,10 @@ namespace Tsw.Args.Net
                 typeName = $"List<{listElementType}>";
             }
 
-            if (!_supportedTypes.Contains(typeName)) throw new ApplicationException($"Property {_propertyInfo.Name}: unsupported type {type.FullName}");
+            if (!_supportedTypes.Contains(typeName))
+            {
+                throw new ParserException(Owner.TypeName, Name, $"Unsupported type: {type.FullName}");
+            }
             return typeName;
         }
 

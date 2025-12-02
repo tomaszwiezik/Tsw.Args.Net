@@ -13,7 +13,7 @@ namespace Tsw.Args.Net
                 Arguments.GetAll(assembly) :
                 AppDomain.CurrentDomain.GetAssemblies().ToList().SelectMany(x => Arguments.GetAll(x))
                 );
-            if (!_types.Any()) throw new ApplicationException("No types decorated with [Arguments] attribute have been found");
+            if (!_types.Any()) throw new ParserException("No types decorated with [Arguments] attribute have been found");
 
             ParserOptions.Merge(options);
             ExecutableName = GetExecutableName();
@@ -22,7 +22,7 @@ namespace Tsw.Args.Net
         public ArgumentsHelp(IEnumerable<Type>? types = null, ParserOptions? options = null)
         {
             _types = _types.Union(types ?? AppDomain.CurrentDomain.GetAssemblies().ToList().SelectMany(x => Arguments.GetAll(x)));
-            if (!_types.Any()) throw new ApplicationException("No types decorated with [Arguments] attribute have been found");
+            if (!_types.Any()) throw new ParserException("No types decorated with [Arguments] attribute have been found");
 
             ParserOptions.Merge(options);
             ExecutableName = GetExecutableName();
@@ -32,11 +32,7 @@ namespace Tsw.Args.Net
         private readonly IEnumerable<Type> _types = [];
 
 
-        public ParserOptions ParserOptions { get; private set; } = new ParserOptions()
-        {
-            OptionPrefix = "--",
-            OptionShortcutPrefix = "-"
-        };
+        public ParserOptions ParserOptions { get; private set; } = new ParserOptions().SetDefaultValues();
         public string ExecutableName { get; }
 
 
@@ -83,7 +79,7 @@ namespace Tsw.Args.Net
 
         private string GetExecutableName()
         {
-            if (ParserOptions.ApplicationName != null)
+            if (!string.IsNullOrWhiteSpace(ParserOptions.ApplicationName))
             {
                 return ParserOptions.ApplicationName;
             }
@@ -92,7 +88,7 @@ namespace Tsw.Args.Net
                 var entryAsseblyName = Assembly.GetEntryAssembly()?.GetName().Name;
                 return entryAsseblyName != null ?
                     entryAsseblyName.Split('.').Last() :
-                    throw new ApplicationException("Cannot determine the application name, use ParserOptions to provide it");
+                    throw new ParserException("Cannot determine the application name, use ParserOptions to provide it");
             }
         }
 
@@ -115,18 +111,18 @@ namespace Tsw.Args.Net
         }
 
 
-        private int GetMaxArgumentLength(List<SyntaxVariantDoc> syntaxDoc) => 
-            syntaxDoc.SelectMany(x => x.Arguments).Count() == 0 ?
+        private int GetMaxArgumentLength(List<SyntaxVariantDoc> syntaxDoc) =>
+            !syntaxDoc.SelectMany(x => x.Arguments).Any() ?
                 0 :
                 syntaxDoc.SelectMany(x => x.Arguments).Max(x => x.Name.Length);
 
         private int GetMaxOptionShortcutNameLength(List<SyntaxVariantDoc> syntaxDoc) =>
-            syntaxDoc.SelectMany(x => x.Options).Count() == 0 ?
+            !syntaxDoc.SelectMany(x => x.Options).Any() ?
                 0 :
                 syntaxDoc.SelectMany(x => x.Options).Max(x => x.ShortcutName.Length);
 
         private int GetMaxOptionNameLength(List<SyntaxVariantDoc> syntaxDoc) =>
-            syntaxDoc.SelectMany(x => x.Options).Count() == 0 ?
+            !syntaxDoc.SelectMany(x => x.Options).Any() ?
                 0 :
                 syntaxDoc.SelectMany(x => x.Options).Max(x => x.Name.Length);
 

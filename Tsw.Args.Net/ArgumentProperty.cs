@@ -5,9 +5,9 @@ namespace Tsw.Args.Net
     internal class ArgumentProperty : Property
     {
         public ArgumentProperty(ParserOptions parserOptions, SyntaxVariant owner, PropertyInfo propertyInfo)
-            : base(parserOptions, owner, propertyInfo, ["Decimal", "Int16", "Int32", "Int64", "String"])
+            : base(parserOptions, owner, propertyInfo, ["Byte", "Decimal", "Int16", "Int32", "Int64", "String", "UInt16", "UInt32", "UInt64"])
         {
-            _attribute = propertyInfo.GetCustomAttribute<ArgumentAttribute>() ?? throw new ApplicationException($"Property {propertyInfo.Name} has no [Argument] attribute.");
+            _attribute = propertyInfo.GetCustomAttribute<ArgumentAttribute>() ?? throw new ParserException(owner.TypeName, Name, "Missing [Argument] attribute.");
         }
 
         private readonly ArgumentAttribute _attribute;

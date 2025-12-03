@@ -42,9 +42,8 @@ Required property attributes for options:
 > [!IMPORTANT]
 > All properties must be of nullable types.
 > Supported types:
-> - arguments: `decimal`, `int`, `long`, `short`, `string`
-> - options: `bool`, `decimal`, `int`, `long`, `short`, `string`, `List<decimal>`, `List<int>`, `List<long>`, `List<short>`, `List<string>`
-> All optional arguments and options must have a default value.
+> - arguments: `decimal`, `int`, `long`, `short`, `string`, `uint`, `ulong`, `ushort`
+> - options: `bool`, `decimal`, `int`, `long`, `short`, `string`, `uint`, `ulong`, `ushort`, `List<decimal>`, `List<int>`, `List<long>`, `List<short>`, `List<string>`, `List<uint>`, `List<ulong>`, `List<ushort>`
 
 See examples of argument definition classes in the following sections.
 
@@ -208,7 +207,7 @@ namespace TW.Args.Net.SampleVariants
 ```
 
 
-## Multiple option values
+## Repeatable options
 
 Normally, each option represent a single value. It is, however, possible to use multiple value of the same option when necessary. To do so, just declare the option of one of supported `List<T>` types - see [Argument definition class](#argument-definition-class) chapter.
 
@@ -308,6 +307,8 @@ Parameters:
 	- `ApplicationName` - The application name to use in help text. By default, the entry assembly name is used.
 	- `OptionPrefix` - The option prefix. The default value is `--` (double hyphen characters).
 	- `OptionShortcutPrefix` - The option shortcut prefix. The default value is `-` (single hyphen character).
+	- `OptionValueSeparator` - The separator between an option name and its value. The default value is `:`, so options should be provided as `--option=value`.
+	- `UseStandaloneValues` - When set to true, the options and their values are separated by a whitechar, so options should be provided as `--option value`. The default value is `false`.
 
 > [!WARNING]
 > `ArgumentParser(assembly, options)` variant is deprecated and should not be used. It will be removed in the future.

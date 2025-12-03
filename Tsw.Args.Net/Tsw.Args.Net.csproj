@@ -10,7 +10,7 @@
     <PackageReleaseNotes>New features:
 1. Consistency verification of arguments and option definitions.
 2. Argument types filtering.
-3. List arguments.
+3. List arguments and repeatable options.
 4. Standalone values.
 5. Configurable value separator.
 6. New types allowed for arguments/options.
@@ -21,7 +21,7 @@ Bug fixes:
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/tomaszwiezik/Tsw.Args.Net</PackageProjectUrl>
     <Title>Tsw.Args.Net</Title>
-    <Version>9.1.0</Version>
+    <Version>9.2.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

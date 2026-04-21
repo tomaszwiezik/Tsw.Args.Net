@@ -189,6 +189,8 @@ namespace Tsw.Args.Net
                 var property = syntaxVariant.ArgumentProperties.Find(x => x.ArgumentPosition == position);
                 if (property == null) return null;
 
+                if (property.ArgumentRequiredValue != null && property.ArgumentRequiredValue != argument) return null;   // The argument value is not the expected one
+
                 if (property.ArgumentRequiredValue == argument || property.ArgumentRequiredValue == null)
                 {
                     property.SetValue(argument);
